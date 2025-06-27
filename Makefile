@@ -10,4 +10,4 @@ run:
 	go run cmd/server/main.go
 
 sqlc:
-	sqlc generate -f internal/db/sqlc.yml
+	sqlc generate -f internal/adapter/outbound/db/sqlc.yml
