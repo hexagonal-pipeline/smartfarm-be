@@ -3,9 +3,11 @@ steps:
     args: ['mod', 'download']
     id: 'Install Dependencies'
     dir: '.'
+    env: ['GOPATH=/workspace']
   - name: 'gcr.io/cloud-builders/go:1.22'
     args: ['build', './cmd/server/...']
     id: 'Compile Check'
     dir: '.'
+    env: ['GOPATH=/workspace']
 options:
   logging: CLOUD_LOGGING_ONLY
