@@ -12,7 +12,6 @@ func InitializeInjector() (do.Injector, error) {
 	provideFarmRepository(injector)
 	provideFarmUseCase(injector)
 	provideFarmHandler(injector)
-	provideFarmRouter(injector)
 
 	return injector, nil
 }

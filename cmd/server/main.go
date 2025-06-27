@@ -28,7 +28,6 @@ func main() {
 	defer injector.Shutdown()
 
 	app := do.MustInvoke[*fiber.App](injector)
-	farmRouter := do.MustInvoke[*farm.Router](injector)
 
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
@@ -36,10 +35,7 @@ func main() {
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
-	api := app.Group("/api")
-	v1 := api.Group("/v1")
-
-	farmRouter.RegisterRoutes(v1)
+	registerRoutes(app, injector)
 
 	log.Info().Msg("🚀 Server is starting...")
 	go startServer(app)
@@ -84,4 +80,12 @@ func waitForSignal() {
 	<-sigChan
 
 	log.Info().Msg("🛑 Server is shutting down...")
+}
+
+func registerRoutes(app *fiber.App, injector do.Injector) {
+	// handlers
+	farmHandler := do.MustInvoke[*farm.Handler](injector)
+
+	// routes
+	farmHandler.RegisterRoutes(app)
 }
