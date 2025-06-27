@@ -1,0 +1,9 @@
+steps:
+  - name: 'gcr.io/cloud-builders/go:1.22'
+    args: ['mod', 'download']
+    id: 'Install Dependencies'
+    dir: '.'
+  - name: 'gcr.io/cloud-builders/go:1.22'
+    args: ['build', './cmd/server/...']
+    id: 'Compile Check'
+    dir: '.'
