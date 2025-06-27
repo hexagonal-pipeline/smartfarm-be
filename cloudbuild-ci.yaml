@@ -7,3 +7,5 @@ steps:
     args: ['build', './cmd/server/...']
     id: 'Compile Check'
     dir: '.'
+options:
+  logging: CLOUD_LOGGING_ONLY
