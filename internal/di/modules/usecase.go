@@ -1,0 +1,11 @@
+package modules
+
+import (
+	"smartfarm-be/internal/usecase"
+
+	"github.com/samber/do/v2"
+)
+
+func ProvideUseCases(injector do.Injector) {
+	do.Provide(injector, usecase.NewFarmService)
+}

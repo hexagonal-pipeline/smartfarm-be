@@ -4,16 +4,22 @@ import (
 	"smartfarm-be/internal/ports"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/do/v2"
 )
 
 type Handler struct {
 	useCase ports.FarmUseCase
 }
 
-func NewHandler(useCase ports.FarmUseCase) *Handler {
+func NewHandler(injector do.Injector) (*Handler, error) {
+	useCase, err := do.Invoke[ports.FarmUseCase](injector)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Handler{
 		useCase: useCase,
-	}
+	}, nil
 }
 
 // ListAvailablePlots godoc

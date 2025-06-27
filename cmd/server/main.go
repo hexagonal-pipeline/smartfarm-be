@@ -16,9 +16,15 @@ import (
 
 	"smartfarm-be/internal/adapter/inbound/web/farm"
 	"smartfarm-be/internal/di"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Warn().Msg("Error loading .env file, using environment variables from OS")
+	}
+
 	setupLogger()
 
 	injector, err := di.InitializeInjector()

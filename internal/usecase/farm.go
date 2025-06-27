@@ -2,22 +2,31 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"smartfarm-be/internal/domain"
 	"smartfarm-be/internal/ports"
+
+	"github.com/samber/do/v2"
 )
 
 type FarmService struct {
 	repo ports.FarmRepository
 }
 
-func NewFarmService(repo ports.FarmRepository) *FarmService {
-	return &FarmService{
-		repo: repo,
+func NewFarmService(injector do.Injector) (ports.FarmUseCase, error) {
+	repo, err := do.Invoke[ports.FarmRepository](injector)
+	if err != nil {
+		return nil, err
 	}
+
+	return &FarmService{repo: repo}, nil
 }
 
 func (s *FarmService) ListAvailablePlots(ctx context.Context) ([]domain.FarmPlot, error) {
-	// Here you can add any business logic before or after fetching the data.
-	// For now, it just calls the repository.
-	return s.repo.ListAvailable(ctx)
+	plots, err := s.repo.ListAvailable(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list available plots: %w", err)
+	}
+
+	return plots, nil
 }
