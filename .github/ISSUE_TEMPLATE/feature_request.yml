@@ -1,0 +1,27 @@
+name: "🚀 기능 요청"
+description: "새로운 기능 제안"
+title: "[기능] "
+labels: ["enhancement"]
+
+body:
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: "어떤 기능인가요?"
+      placeholder: "예: 센서 데이터 실시간 알림 기능"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-needed
+    attributes:
+      label: "왜 필요한가요?"
+      placeholder: "예: 온도가 위험 수준에 도달했을 때 즉시 알려야 함"
+    validations:
+      required: true
+
+  - type: textarea
+    id: how-to-implement
+    attributes:
+      label: "어떻게 구현할까요?"
+      placeholder: "예: 임계치 설정 후 웹소켓으로 실시간 푸시 알림" 

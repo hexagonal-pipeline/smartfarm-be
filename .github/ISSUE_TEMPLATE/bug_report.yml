@@ -1,0 +1,38 @@
+name: "🐛 버그 신고"
+description: "버그 발견 시 신고"
+title: "[버그] "
+labels: ["bug"]
+
+body:
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: "무슨 문제인가요?"
+      placeholder: "예: 로그인 후 대시보드가 안 보임"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: "어떻게 재현하나요?"
+      placeholder: |
+        1. 로그인
+        2. 대시보드 클릭
+        3. 빈 화면 나타남
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-vs-actual
+    attributes:
+      label: "예상 vs 실제"
+      placeholder: "예상: 센서 데이터 표시 → 실제: 빈 화면"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: "환경 정보"
+      placeholder: "브라우저, OS 등" 
