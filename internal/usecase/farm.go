@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"smartfarm-be/internal/domain"
-	"smartfarm-be/internal/ports"
+	farmoutbound "smartfarm-be/internal/ports/outbound"
 
 	"github.com/samber/do/v2"
 )
 
 type FarmService struct {
-	repo ports.FarmRepository
+	repo farmoutbound.FarmRepository
 }
 
-func NewFarmService(injector do.Injector) (ports.FarmUseCase, error) {
-	repo, err := do.Invoke[ports.FarmRepository](injector)
+func NewFarmService(injector do.Injector) (*FarmService, error) {
+	repo, err := do.Invoke[farmoutbound.FarmRepository](injector)
 	if err != nil {
 		return nil, err
 	}

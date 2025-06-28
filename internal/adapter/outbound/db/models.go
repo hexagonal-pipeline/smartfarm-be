@@ -8,6 +8,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CommissionWork struct {
+	ID                int32              `json:"id"`
+	RequesterNickname string             `json:"requester_nickname"`
+	PlotID            int32              `json:"plot_id"`
+	TaskType          string             `json:"task_type"`
+	TaskDescription   pgtype.Text        `json:"task_description"`
+	Status            string             `json:"status"`
+	CreditCost        int32              `json:"credit_cost"`
+	RequestedAt       pgtype.Timestamptz `json:"requested_at"`
+	CompletedAt       pgtype.Timestamptz `json:"completed_at"`
+}
+
+type CreditTransaction struct {
+	ID              int32              `json:"id"`
+	Nickname        string             `json:"nickname"`
+	TransactionType string             `json:"transaction_type"`
+	Amount          int32              `json:"amount"`
+	RelatedID       pgtype.Int4        `json:"related_id"`
+	Description     pgtype.Text        `json:"description"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+}
+
 type FarmPlot struct {
 	ID          int32            `json:"id"`
 	Name        string           `json:"name"`
@@ -36,7 +58,7 @@ type Raid struct {
 
 type RaidParticipation struct {
 	ID                  int32            `json:"id"`
-	RaidID              pgtype.Int4      `json:"raid_id"`
+	RaidID              int32            `json:"raid_id"`
 	ParticipantNickname string           `json:"participant_nickname"`
 	Quantity            int32            `json:"quantity"`
 	ExpectedRevenue     int32            `json:"expected_revenue"`
@@ -47,7 +69,7 @@ type RaidParticipation struct {
 type Rental struct {
 	ID             int32            `json:"id"`
 	RenterNickname string           `json:"renter_nickname"`
-	PlotID         pgtype.Int4      `json:"plot_id"`
+	PlotID         int32            `json:"plot_id"`
 	StartDate      pgtype.Date      `json:"start_date"`
 	EndDate        pgtype.Date      `json:"end_date"`
 	MonthlyRent    int32            `json:"monthly_rent"`
@@ -69,6 +91,7 @@ type UserStat struct {
 	Nickname        string           `json:"nickname"`
 	Level           pgtype.Int4      `json:"level"`
 	Experience      pgtype.Int4      `json:"experience"`
+	Credit          pgtype.Int4      `json:"credit"`
 	TotalRevenue    pgtype.Int4      `json:"total_revenue"`
 	SuccessfulRaids pgtype.Int4      `json:"successful_raids"`
 	PlotsRented     pgtype.Int4      `json:"plots_rented"`

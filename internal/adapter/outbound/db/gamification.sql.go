@@ -14,7 +14,7 @@ import (
 const createUserStats = `-- name: CreateUserStats :one
 INSERT INTO user_stats (nickname)
 VALUES ($1)
-RETURNING nickname, level, experience, total_revenue, successful_raids, plots_rented, updated_at
+RETURNING nickname, level, experience, credit, total_revenue, successful_raids, plots_rented, updated_at
 `
 
 func (q *Queries) CreateUserStats(ctx context.Context, nickname string) (UserStat, error) {
@@ -24,6 +24,7 @@ func (q *Queries) CreateUserStats(ctx context.Context, nickname string) (UserSta
 		&i.Nickname,
 		&i.Level,
 		&i.Experience,
+		&i.Credit,
 		&i.TotalRevenue,
 		&i.SuccessfulRaids,
 		&i.PlotsRented,
@@ -74,7 +75,7 @@ func (q *Queries) GetLeaderboard(ctx context.Context) ([]GetLeaderboardRow, erro
 }
 
 const getUserStats = `-- name: GetUserStats :one
-SELECT nickname, level, experience, total_revenue, successful_raids, plots_rented, updated_at FROM user_stats
+SELECT nickname, level, experience, credit, total_revenue, successful_raids, plots_rented, updated_at FROM user_stats
 WHERE nickname = $1
 `
 
@@ -85,6 +86,7 @@ func (q *Queries) GetUserStats(ctx context.Context, nickname string) (UserStat, 
 		&i.Nickname,
 		&i.Level,
 		&i.Experience,
+		&i.Credit,
 		&i.TotalRevenue,
 		&i.SuccessfulRaids,
 		&i.PlotsRented,
@@ -98,7 +100,7 @@ UPDATE user_stats
 SET successful_raids = successful_raids + 1,
     updated_at = CURRENT_TIMESTAMP
 WHERE nickname = $1
-RETURNING nickname, level, experience, total_revenue, successful_raids, plots_rented, updated_at
+RETURNING nickname, level, experience, credit, total_revenue, successful_raids, plots_rented, updated_at
 `
 
 func (q *Queries) IncrementSuccessfulRaids(ctx context.Context, nickname string) (UserStat, error) {
@@ -108,6 +110,7 @@ func (q *Queries) IncrementSuccessfulRaids(ctx context.Context, nickname string)
 		&i.Nickname,
 		&i.Level,
 		&i.Experience,
+		&i.Credit,
 		&i.TotalRevenue,
 		&i.SuccessfulRaids,
 		&i.PlotsRented,
@@ -125,7 +128,7 @@ SET experience = experience + $2,
     END,
     updated_at = CURRENT_TIMESTAMP
 WHERE nickname = $1
-RETURNING nickname, level, experience, total_revenue, successful_raids, plots_rented, updated_at
+RETURNING nickname, level, experience, credit, total_revenue, successful_raids, plots_rented, updated_at
 `
 
 type UpdateUserExperienceParams struct {
@@ -140,6 +143,7 @@ func (q *Queries) UpdateUserExperience(ctx context.Context, arg UpdateUserExperi
 		&i.Nickname,
 		&i.Level,
 		&i.Experience,
+		&i.Credit,
 		&i.TotalRevenue,
 		&i.SuccessfulRaids,
 		&i.PlotsRented,
@@ -153,7 +157,7 @@ UPDATE user_stats
 SET total_revenue = total_revenue + $2,
     updated_at = CURRENT_TIMESTAMP
 WHERE nickname = $1
-RETURNING nickname, level, experience, total_revenue, successful_raids, plots_rented, updated_at
+RETURNING nickname, level, experience, credit, total_revenue, successful_raids, plots_rented, updated_at
 `
 
 type UpdateUserRevenueParams struct {
@@ -168,6 +172,7 @@ func (q *Queries) UpdateUserRevenue(ctx context.Context, arg UpdateUserRevenuePa
 		&i.Nickname,
 		&i.Level,
 		&i.Experience,
+		&i.Credit,
 		&i.TotalRevenue,
 		&i.SuccessfulRaids,
 		&i.PlotsRented,
