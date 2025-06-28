@@ -32,4 +32,12 @@ func ProvideDatabase(injector do.Injector) {
 		}
 		return db.New(pool), nil
 	})
+
+	do.Provide(injector, func(i do.Injector) (*db.Queries, error) {
+		pool, err := do.Invoke[*pgxpool.Pool](i)
+		if err != nil {
+			return nil, err
+		}
+		return db.New(pool), nil
+	})
 }
