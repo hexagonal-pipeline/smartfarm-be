@@ -42,7 +42,7 @@ func NewPlantCardUsecase(i do.Injector) (*PlantCardUsecase, error) {
 }
 
 // GeneratePlantCard creates a new plant card for a given farm plot with persona, image, and video.
-func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID int64) (*domain.PlantCard, error) {
+func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID int64, event string) (*domain.PlantCard, error) {
 	// 1. 농장 정보 조회
 	farmPlot, err := uc.farmRepo.GetByID(ctx, farmPlotID)
 	if err != nil {
@@ -65,7 +65,7 @@ func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID in
 	}
 
 	// 3. 이벤트 메시지 생성 (SNS 공유용)
-	eventMessage, err := uc.aiGen.GenerateEventMessage(ctx, persona, "plant_card_creation")
+	eventMessage, err := uc.aiGen.GenerateEventMessage(ctx, persona, event)
 	if err != nil {
 		log.Error().Err(err).Str("persona", persona).Msg("failed to generate event message")
 		return nil, fmt.Errorf("failed to generate event message: %w", err)

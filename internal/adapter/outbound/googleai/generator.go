@@ -147,8 +147,16 @@ func (g *GoogleAIGenerator) GenerateEventMessage(ctx context.Context, persona, e
 - 이모지 포함 가능
 - 80자 이내로 간결하게
 - 친근하고 재미있게
+- 이벤트의 성격과 목적에 맞는 메시지 작성
+- 반드시 성격을 중요시 할 것
 
-예시: "🌱 드디어 나의 플랜트카드가 완성됐어! 내 성장 과정을 영상으로 만나보세요 ✨"
+이벤트 별 예시:
+- plant_card_creation: "🌱 드디어 나의 플랜트카드가 완성됐어! 내 성장 과정을 영상으로 만나보세요 ✨"
+- harvest_ready: "🌾 수확의 계절이 왔어요! 오늘이 제가 가장 맛있는 날이에요 😋"
+- growth_update: "💪 쑥쑥 자라고 있어요! 오늘의 성장 소식을 전해드려요 🌿"
+- weather_alert: "☔️ 비가 많이 오네요! 걱정 마세요, 저는 잘 지내고 있답니다 🌱"
+
+주어진 이벤트의 성격을 파악하여 적절한 메시지를 생성해주세요.
 `, persona, event)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
@@ -187,6 +195,7 @@ Requirements:
 - 1:1 aspect ratio (square format)
 - Agricultural theme with farm elements
 - Without any text on the image
+- NEVER TEXT ON THE IMAGE
 `, prompt)
 
 	// REST API 요청 준비
