@@ -18,6 +18,7 @@ import (
 
 	"smartfarm-be/internal/adapter/inbound/web/commission"
 	"smartfarm-be/internal/adapter/inbound/web/farm"
+	"smartfarm-be/internal/adapter/inbound/web/plantcard"
 	"smartfarm-be/internal/di"
 
 	"github.com/joho/godotenv"
@@ -117,9 +118,15 @@ func registerRoutes(app *fiber.App, injector do.Injector) error {
 		return fmt.Errorf("failed to invoke commission handler: %w", err)
 	}
 
+	plantCardHandler, err := do.Invoke[*plantcard.Handler](injector)
+	if err != nil {
+		return fmt.Errorf("failed to invoke plant card handler: %w", err)
+	}
+
 	// routes
 	farmHandler.RegisterRoutes(app)
 	commissionHandler.RegisterRoutes(app)
+	plantCardHandler.RegisterRoutes(app)
 
 	return nil
 }

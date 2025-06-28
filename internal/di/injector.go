@@ -15,6 +15,7 @@ func InitializeInjector() (do.Injector, error) {
 	modules.ProvideDatabase(injector)
 	modules.ProvideServer(injector)
 	modules.ProvideRepositories(injector)
+	modules.ProvideAdapters(injector)
 	modules.ProvideUseCases(injector)
 	modules.ProvideHandlers(injector)
 

@@ -7,7 +7,8 @@ import (
 )
 
 func ProvideRepositories(injector do.Injector) {
+	// Repositories
 	do.Provide(injector, postgres.NewFarmRepository)
-	do.Provide(injector, postgres.NewPlantCardRepository)
 	do.Provide(injector, postgres.NewCommissionRepository)
+	do.Provide(injector, postgres.NewPlantCardRepository)
 }
