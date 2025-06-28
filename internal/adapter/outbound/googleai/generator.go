@@ -186,6 +186,7 @@ Requirements:
 - High quality, detailed illustration
 - 1:1 aspect ratio (square format)
 - Agricultural theme with farm elements
+- Without any text on the image
 `, prompt)
 
 	// REST API 요청 준비
