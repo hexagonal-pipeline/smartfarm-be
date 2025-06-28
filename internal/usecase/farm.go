@@ -30,3 +30,12 @@ func (s *FarmService) ListAvailablePlots(ctx context.Context) ([]domain.FarmPlot
 
 	return plots, nil
 }
+
+func (s *FarmService) ListMyPlots(ctx context.Context, nickname string) ([]domain.FarmPlot, error) {
+	plots, err := s.repo.ListByRenter(ctx, nickname)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list my plots: %w", err)
+	}
+
+	return plots, nil
+}

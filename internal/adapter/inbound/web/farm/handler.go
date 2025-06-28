@@ -38,3 +38,26 @@ func (h *Handler) ListAvailablePlots(c *fiber.Ctx) error {
 
 	return c.JSON(NewFarmPlotListResponse(plots))
 }
+
+// ListMyPlots godoc
+// @Summary      List my farm plots
+// @Description  get a list of all farm plots rented by a user
+// @Tags         farms
+// @Accept       json
+// @Produce      json
+// @Param        nickname   query      string  true  "User nickname"
+// @Success      200  {array}   FarmPlotResponse
+// @Router       /farms/my-plots [get]
+func (h *Handler) ListMyPlots(c *fiber.Ctx) error {
+	nickname := c.Query("nickname")
+	if nickname == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "nickname query parameter is required")
+	}
+
+	plots, err := h.useCase.ListMyPlots(c.Context(), nickname)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get my plots")
+	}
+
+	return c.JSON(NewFarmPlotListResponse(plots))
+}
