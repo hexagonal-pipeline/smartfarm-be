@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"smartfarm-be/internal/ports/outbound"
 	"smartfarm-be/pkg/config"
@@ -18,11 +19,72 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
 	"google.golang.org/api/option"
+	veo "google.golang.org/genai"
 )
 
 type GoogleAIGenerator struct {
-	client *genai.Client
-	config *config.GeminiConfig
+	client    *genai.Client
+	veoClient *veo.Client
+	config    *config.GeminiConfig
+	veoConfig *config.VeoConfig
+}
+
+// Veo API 구조체들
+type VeoVideoRequest struct {
+	Instances  []VeoInstance `json:"instances"`
+	Parameters VeoParameters `json:"parameters"`
+}
+
+type VeoInstance struct {
+	Prompt string   `json:"prompt"`
+	Image  *VeoFile `json:"image,omitempty"`
+}
+
+type VeoFile struct {
+	BytesBase64Encoded string `json:"bytesBase64Encoded,omitempty"`
+	GcsUri             string `json:"gcsUri,omitempty"`
+	MimeType           string `json:"mimeType"`
+}
+
+type VeoParameters struct {
+	AspectRatio      string `json:"aspectRatio,omitempty"`
+	DurationSeconds  int    `json:"durationSeconds,omitempty"`
+	EnhancePrompt    bool   `json:"enhancePrompt,omitempty"`
+	NegativePrompt   string `json:"negativePrompt,omitempty"`
+	PersonGeneration string `json:"personGeneration,omitempty"`
+	SampleCount      int    `json:"sampleCount,omitempty"`
+	Seed             uint32 `json:"seed,omitempty"`
+	StorageUri       string `json:"storageUri,omitempty"`
+}
+
+type VeoVideoResponse struct {
+	Name string `json:"name"`
+}
+
+type VeoOperationStatusRequest struct {
+	OperationName string `json:"operationName"`
+}
+
+type VeoOperationResponse struct {
+	Name     string       `json:"name"`
+	Done     bool         `json:"done"`
+	Response *VeoResponse `json:"response,omitempty"`
+	Error    *VeoError    `json:"error,omitempty"`
+}
+
+type VeoResponse struct {
+	Type   string     `json:"@type"`
+	Videos []VeoVideo `json:"videos"`
+}
+
+type VeoVideo struct {
+	GcsUri   string `json:"gcsUri"`
+	MimeType string `json:"mimeType"`
+}
+
+type VeoError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // Gemini REST API 구조체들
@@ -66,21 +128,42 @@ type GeminiInlineData struct {
 }
 
 func NewGoogleAIGenerator(i do.Injector) (outbound.AIGenerator, error) {
-	cfg := do.MustInvoke[*config.GeminiConfig](i)
+	geminiCfg := do.MustInvoke[*config.GeminiConfig](i)
 
-	if cfg.APIKey == "" {
+	// VeoConfig는 선택적으로 주입 (없으면 nil로 처리)
+	var veoConfig *config.VeoConfig
+	defer func() {
+		if r := recover(); r != nil {
+			// VeoConfig가 등록되지 않은 경우 panic이 발생하므로 nil로 처리
+			veoConfig = nil
+		}
+	}()
+
+	// VeoConfig 주입 시도
+	func() {
+		veoConfig = do.MustInvoke[*config.VeoConfig](i)
+	}()
+
+	if geminiCfg.APIKey == "" {
 		log.Warn().Msg("Google AI API key not provided, using mock responses")
-		return &GoogleAIGenerator{config: cfg}, nil
+		return nil, fmt.Errorf("Google AI API key not provided")
 	}
 
-	client, err := genai.NewClient(context.Background(), option.WithAPIKey(cfg.APIKey))
+	client, err := genai.NewClient(context.Background(), option.WithAPIKey(geminiCfg.APIKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
+	veoClient, err := veo.NewClient(context.Background(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Veo client: %w", err)
+	}
+
 	return &GoogleAIGenerator{
-		client: client,
-		config: cfg,
+		client:    client,
+		config:    geminiCfg,
+		veoConfig: veoConfig,
+		veoClient: veoClient,
 	}, nil
 }
 
@@ -300,18 +383,118 @@ func (g *GoogleAIGenerator) saveImageToFile(imageData []byte, fileName string) (
 	return imageURL, nil
 }
 
-// GenerateVideo는 주어진 프롬프트와 이미지로 비디오를 생성합니다.
-// TODO: 실제 Veo API를 호출하여 비디오 생성 로직 구현 필요
-func (g *GoogleAIGenerator) GenerateVideo(ctx context.Context, persona, imageURL string) (string, error) {
-	// 현재는 목업 URL 반환 (추후 Veo API 연동)
-	log.Info().Str("persona", persona).Str("image_url", imageURL).Msg("video generation requested (mock)")
-	return "https://example.com/generated-video.mp4", nil
+func (g *GoogleAIGenerator) GenerateVideo(ctx context.Context, prompt, imageURL string) (string, error) {
+
+	imageData, err := os.ReadFile(path.Join(".", imageURL))
+	if err != nil {
+		return "", fmt.Errorf("failed to read image file: %w", err)
+	}
+
+	if g.veoConfig == nil {
+		log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo video generation requested (mock - no VEO config)")
+		return "", nil
+	}
+
+	if g.veoClient == nil {
+		return "", fmt.Errorf("veo client is not initialized")
+	}
+
+	videoConfig := &veo.GenerateVideosConfig{
+		AspectRatio:      "9:16",
+		PersonGeneration: "dont_allow",
+		NumberOfVideos:   1,
+	}
+	operation, err := g.veoClient.Models.GenerateVideos(ctx, "veo-2.0-generate-001", prompt, &veo.Image{
+		ImageBytes: imageData,
+		MIMEType:   "image/png",
+	}, videoConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate video: %w", err)
+	}
+	if operation == nil {
+		return "", fmt.Errorf("received nil operation from GenerateVideos")
+	}
+	for !operation.Done {
+		time.Sleep(10 * time.Second)
+		operation, err = g.veoClient.Operations.GetVideosOperation(ctx, operation, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to get operation status: %w", err)
+		}
+		if operation == nil {
+			return "", fmt.Errorf("received nil operation from GetVideosOperation")
+		}
+	}
+	if operation.Response == nil {
+		return "", fmt.Errorf("operation completed but response is nil")
+	}
+	for n, video := range operation.Response.GeneratedVideos {
+		_, err := g.veoClient.Files.Download(ctx, video.Video, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to download video file")
+			continue
+		}
+		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write video file: %w", err)
+		}
+		return fname, nil
+	}
+	return "", fmt.Errorf("no video data found in Veo response")
 }
 
-// GenerateVideoFromPrompt는 텍스트 프롬프트와 이미지를 사용하여 Veo3로 쇼츠 비디오를 생성합니다.
-// TODO: 실제 Veo3 API를 호출하여 비디오 생성 로직 구현 필요
+// GenerateVideoFromPrompt는 텍스트 프롬프트와 이미지를 사용하여 Veo로 쇼츠 비디오를 생성합니다.
 func (g *GoogleAIGenerator) GenerateVideoFromPrompt(ctx context.Context, prompt, imageURL string) (string, error) {
-	// 현재는 목업 URL 반환 (추후 Veo3 API 연동)
-	log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo3 video generation requested (mock)")
-	return "https://example.com/veo3-generated-video.mp4", nil
+	// VeoConfig가 없으면 mock 응답
+	if g.veoConfig == nil {
+		log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo video generation requested (mock - no VEO config)")
+		return "", nil
+	}
+
+	if g.veoClient == nil {
+		return "", fmt.Errorf("veo client is not initialized")
+	}
+
+	videoConfig := &veo.GenerateVideosConfig{
+		AspectRatio:      "1:1",
+		PersonGeneration: "dont_allow",
+		NumberOfVideos:   1,
+	}
+	operation, err := g.veoClient.Models.GenerateVideos(ctx, "veo-2.0-generate-001", prompt, nil, videoConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate video: %w", err)
+	}
+	if operation == nil {
+		return "", fmt.Errorf("received nil operation from GenerateVideos")
+	}
+
+	for !operation.Done {
+		time.Sleep(10 * time.Second)
+		operation, err = g.veoClient.Operations.GetVideosOperation(ctx, operation, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to get operation status: %w", err)
+		}
+		if operation == nil {
+			return "", fmt.Errorf("received nil operation from GetVideosOperation")
+		}
+	}
+
+	if operation.Response == nil {
+		return "", fmt.Errorf("operation completed but response is nil")
+	}
+
+	for n, video := range operation.Response.GeneratedVideos {
+		_, err := g.veoClient.Files.Download(ctx, video.Video, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to download video file")
+			continue
+		}
+		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write video file: %w", err)
+		}
+		return fname, nil
+	}
+	return "", fmt.Errorf("no video data found in Veo response")
 }

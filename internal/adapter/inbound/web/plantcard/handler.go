@@ -18,6 +18,20 @@ func NewHandler(i do.Injector) (*Handler, error) {
 	}, nil
 }
 
+func (h *Handler) GeneratePlantCard(c *fiber.Ctx) error {
+	var req CreatePlantCardRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
+
+	plantCard, err := h.plantCardUsecase.GeneratePlantCard(c.Context(), req.FarmPlotID, req.Event)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to create plant card")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(plantCard)
+}
+
 // CreatePlantCard godoc
 // @Summary      Create plant card
 // @Description  Generate a plant card with persona, image, and video for a farm plot

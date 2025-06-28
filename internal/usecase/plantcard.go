@@ -81,7 +81,7 @@ func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID in
 
 	// 5. Veo3를 이용한 쇼츠 비디오 생성
 	videoPrompt := fmt.Sprintf("Create a short engaging video featuring this character: %s. The character says: %s", persona, eventMessage)
-	videoURL, err := uc.aiGen.GenerateVideoFromPrompt(ctx, videoPrompt, imageURL)
+	videoURL, err := uc.aiGen.GenerateVideo(ctx, videoPrompt, imageURL)
 	if err != nil {
 		log.Error().Err(err).Str("prompt", videoPrompt).Msg("failed to generate video with Veo3")
 		return nil, fmt.Errorf("failed to generate video: %w", err)
