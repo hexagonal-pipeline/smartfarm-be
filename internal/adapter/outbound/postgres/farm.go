@@ -11,7 +11,7 @@ import (
 )
 
 type FarmRepository struct {
-	db.Querier
+	q db.Querier
 }
 
 func NewFarmRepository(injector do.Injector) (outbound.FarmRepository, error) {
@@ -19,9 +19,7 @@ func NewFarmRepository(injector do.Injector) (outbound.FarmRepository, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &FarmRepository{
-		Querier: querier,
-	}, nil
+	return &FarmRepository{q: querier}, nil
 }
 
 func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
@@ -29,7 +27,7 @@ func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
 		ID:          int64(p.ID),
 		Name:        p.Name,
 		Location:    p.Location.String,
-		SizeSQM:     p.SizeSqm,
+		SizeSqm:     p.SizeSqm,
 		MonthlyRent: p.MonthlyRent,
 		CropType:    p.CropType.String,
 		Status:      p.Status.String,
@@ -37,8 +35,19 @@ func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
 	}
 }
 
+func toDomainFarmPlotFromRenterRow(p db.ListPlotsByRenterRow) domain.FarmPlot {
+	return domain.FarmPlot{
+		ID:       int64(p.ID),
+		Name:     p.Name,
+		Location: p.Location.String,
+		SizeSqm:  p.SizeSqm,
+		CropType: p.CropType.String,
+		Status:   p.Status.String,
+	}
+}
+
 func (r *FarmRepository) ListAvailable(ctx context.Context) ([]domain.FarmPlot, error) {
-	dbPlots, err := r.ListAvailablePlots(ctx)
+	dbPlots, err := r.q.ListAvailablePlots(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list available plots: %w", err)
 	}
@@ -52,22 +61,14 @@ func (r *FarmRepository) ListAvailable(ctx context.Context) ([]domain.FarmPlot, 
 }
 
 func (r *FarmRepository) ListByRenter(ctx context.Context, renterNickname string) ([]domain.FarmPlot, error) {
-	dbPlots, err := r.ListPlotsByRenter(ctx, renterNickname)
+	dbPlots, err := r.q.ListPlotsByRenter(ctx, renterNickname)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list plots by renter: %w", err)
 	}
 
 	plots := make([]domain.FarmPlot, len(dbPlots))
 	for i, p := range dbPlots {
-		plots[i] = domain.FarmPlot{
-			ID:       int64(p.ID),
-			Name:     p.Name,
-			Location: p.Location.String,
-			SizeSQM:  p.SizeSqm,
-			CropType: p.CropType.String,
-			Status:   p.Status.String,
-			// CreatedAt, MonthlyRent 등은 ListPlotsByRenterRow에 없어 매핑 불가
-		}
+		plots[i] = toDomainFarmPlotFromRenterRow(p)
 	}
 
 	return plots, nil

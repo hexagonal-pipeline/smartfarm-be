@@ -31,14 +31,15 @@ type CreditTransaction struct {
 }
 
 type FarmPlot struct {
-	ID          int32            `json:"id"`
-	Name        string           `json:"name"`
-	Location    pgtype.Text      `json:"location"`
-	SizeSqm     int32            `json:"size_sqm"`
-	MonthlyRent int32            `json:"monthly_rent"`
-	CropType    pgtype.Text      `json:"crop_type"`
-	Status      pgtype.Text      `json:"status"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	ID            int32            `json:"id"`
+	Name          string           `json:"name"`
+	Location      pgtype.Text      `json:"location"`
+	SizeSqm       int32            `json:"size_sqm"`
+	MonthlyRent   int32            `json:"monthly_rent"`
+	CropType      pgtype.Text      `json:"crop_type"`
+	Status        pgtype.Text      `json:"status"`
+	CreatedAt     pgtype.Timestamp `json:"created_at"`
+	PersonaPrompt pgtype.Text      `json:"persona_prompt"`
 }
 
 type Raid struct {

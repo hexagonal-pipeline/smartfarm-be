@@ -12,7 +12,7 @@ import (
 )
 
 const getPlot = `-- name: GetPlot :one
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE id = $1
 `
 
@@ -28,12 +28,13 @@ func (q *Queries) GetPlot(ctx context.Context, id int32) (FarmPlot, error) {
 		&i.CropType,
 		&i.Status,
 		&i.CreatedAt,
+		&i.PersonaPrompt,
 	)
 	return i, err
 }
 
 const listAvailablePlots = `-- name: ListAvailablePlots :many
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE status = 'available'
 ORDER BY monthly_rent ASC
 `
@@ -56,6 +57,7 @@ func (q *Queries) ListAvailablePlots(ctx context.Context) ([]FarmPlot, error) {
 			&i.CropType,
 			&i.Status,
 			&i.CreatedAt,
+			&i.PersonaPrompt,
 		); err != nil {
 			return nil, err
 		}
@@ -68,7 +70,7 @@ func (q *Queries) ListAvailablePlots(ctx context.Context) ([]FarmPlot, error) {
 }
 
 const listPlotsByCrop = `-- name: ListPlotsByCrop :many
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE crop_type = $1 AND status = 'available'
 ORDER BY monthly_rent ASC
 `
@@ -91,6 +93,7 @@ func (q *Queries) ListPlotsByCrop(ctx context.Context, cropType pgtype.Text) ([]
 			&i.CropType,
 			&i.Status,
 			&i.CreatedAt,
+			&i.PersonaPrompt,
 		); err != nil {
 			return nil, err
 		}
@@ -166,7 +169,7 @@ const updateFarmPlotStatus = `-- name: UpdateFarmPlotStatus :one
 UPDATE farm_plots
 SET status = $2
 WHERE id = $1
-RETURNING id, name, location, size_sqm, monthly_rent, crop_type, status, created_at
+RETURNING id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt
 `
 
 type UpdateFarmPlotStatusParams struct {
@@ -186,6 +189,7 @@ func (q *Queries) UpdateFarmPlotStatus(ctx context.Context, arg UpdateFarmPlotSt
 		&i.CropType,
 		&i.Status,
 		&i.CreatedAt,
+		&i.PersonaPrompt,
 	)
 	return i, err
 }

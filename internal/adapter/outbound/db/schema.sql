@@ -112,7 +112,8 @@ CREATE TABLE public.farm_plots (
     monthly_rent integer NOT NULL,
     crop_type character varying(50),
     status character varying(20) DEFAULT 'available'::character varying,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    persona_prompt text
 );
 
 
