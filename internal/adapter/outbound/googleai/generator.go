@@ -423,7 +423,7 @@ func (g *GoogleAIGenerator) GenerateVideo(ctx context.Context, prompt, imageURL 
 			log.Error().Err(err).Msg("failed to download video file")
 			continue
 		}
-		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		fname := fmt.Sprintf("uploads/video_%d_%d.mp4", time.Now().Unix(), n)
 		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
 		if err != nil {
 			return "", fmt.Errorf("failed to write video file: %w", err)
@@ -479,7 +479,7 @@ func (g *GoogleAIGenerator) GenerateVideoFromPrompt(ctx context.Context, prompt,
 			log.Error().Err(err).Msg("failed to download video file")
 			continue
 		}
-		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		fname := fmt.Sprintf("uploads/video_%d_%d.mp4", time.Now().Unix(), n)
 		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
 		if err != nil {
 			return "", fmt.Errorf("failed to write video file: %w", err)
