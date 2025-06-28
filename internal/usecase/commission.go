@@ -5,6 +5,7 @@ import (
 	"smartfarm-be/internal/domain"
 	"smartfarm-be/internal/ports/outbound"
 
+	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
 )
 
@@ -41,5 +42,21 @@ func (s *CommissionService) CreateCommissionWork(ctx context.Context, params Cre
 		CreditCost:        params.CreditCost,
 	}
 
-	return s.repo.Create(ctx, newWork)
+	createdWork, err := s.repo.Create(ctx, newWork)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to create commission work")
+		return nil, err
+	}
+
+	return createdWork, nil
+}
+
+func (s *CommissionService) ListCommissionWorksByStatus(ctx context.Context, status string) ([]domain.CommissionWork, error) {
+	works, err := s.repo.ListByStatus(ctx, status)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to list commission works by status")
+		return nil, err
+	}
+
+	return works, nil
 }
