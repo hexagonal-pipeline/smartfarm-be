@@ -9,9 +9,15 @@
 - 테스트: `testify`
 - 로깅: `zerolog`
 - 의존성 주입: `samber/do` (v2)
+- 데이터베이스 마이그레이션: `dbmate`
 
 ## 환경 변수 예제 (`.env`)
 ```env
 PORT=8080
-DATABASE_URL=postgresql://user:password@localhost:5432/database
+
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=smartfarm
 ```
