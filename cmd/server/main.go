@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
 
+	"smartfarm-be/internal/adapter/inbound/web/commission"
 	"smartfarm-be/internal/adapter/inbound/web/farm"
 	"smartfarm-be/internal/di"
 
@@ -41,7 +43,10 @@ func main() {
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
-	registerRoutes(app, injector)
+	err = registerRoutes(app, injector)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to register routes")
+	}
 
 	log.Info().Msg("🚀 Server is starting...")
 	go startServer(app)
@@ -88,10 +93,21 @@ func waitForSignal() {
 	log.Info().Msg("🛑 Server is shutting down...")
 }
 
-func registerRoutes(app *fiber.App, injector do.Injector) {
+func registerRoutes(app *fiber.App, injector do.Injector) error {
 	// handlers
-	farmHandler := do.MustInvoke[*farm.Handler](injector)
+	farmHandler, err := do.Invoke[*farm.Handler](injector)
+	if err != nil {
+		return fmt.Errorf("failed to invoke farm handler: %w", err)
+	}
+
+	commissionHandler, err := do.Invoke[*commission.Handler](injector)
+	if err != nil {
+		return fmt.Errorf("failed to invoke commission handler: %w", err)
+	}
 
 	// routes
 	farmHandler.RegisterRoutes(app)
+	commissionHandler.RegisterRoutes(app)
+
+	return nil
 }

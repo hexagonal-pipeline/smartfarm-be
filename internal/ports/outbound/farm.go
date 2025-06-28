@@ -1,4 +1,4 @@
-package farmoutbound
+package outbound
 
 import (
 	"context"
