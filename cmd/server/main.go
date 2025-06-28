@@ -49,6 +49,9 @@ func main() {
 		AllowMethods: "GET,POST,HEAD,PUT,DELETE,PATCH",
 	}))
 
+	// 정적 파일 서빙 (생성된 이미지 파일들)
+	app.Static("/uploads", "./uploads")
+
 	err = registerRoutes(app, injector)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to register routes")
