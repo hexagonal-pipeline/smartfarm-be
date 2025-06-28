@@ -18,18 +18,18 @@ func NewHandler(i do.Injector) (*Handler, error) {
 	}, nil
 }
 
-type CreatePlantCardRequest struct {
-	FarmPlotID int64 `json:"farm_plot_id"`
-}
+func (h *Handler) GeneratePlantCard(c *fiber.Ctx) error {
+	var req CreatePlantCardRequest
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid request body")
+	}
 
-type CreatePlantCardResponse struct {
-	ID           int64  `json:"id"`
-	FarmPlotID   int64  `json:"farm_plot_id"`
-	Persona      string `json:"persona"`
-	ImageURL     string `json:"image_url"`
-	VideoURL     string `json:"video_url"`
-	EventMessage string `json:"event_message"`
-	CreatedAt    string `json:"created_at"`
+	plantCard, err := h.plantCardUsecase.GeneratePlantCard(c.Context(), req.FarmPlotID, req.Event)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to create plant card")
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(plantCard)
 }
 
 // CreatePlantCard godoc
@@ -51,7 +51,7 @@ func (h *Handler) CreatePlantCard(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "farm_plot_id is required")
 	}
 
-	plantCard, err := h.plantCardUsecase.GeneratePlantCard(c.Context(), req.FarmPlotID)
+	plantCard, err := h.plantCardUsecase.GeneratePlantCard(c.Context(), req.FarmPlotID, req.Event)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to create plant card")
 	}

@@ -3,10 +3,10 @@
 
 -- 1. 추가 농장 구획 데이터 (ID 명시적 지정)
 INSERT INTO farm_plots (id, name, location, size_sqm, monthly_rent, crop_type, status, persona_prompt) VALUES 
-(5, 'C구역-01', '전남 나주시', 180, 220000, '배추', 'available', '김치의 주인공! 하얀 속살과 아삭한 식감의 배추 대장이야.'),
-(6, 'C구역-02', '전남 나주시', 160, 190000, '무', 'available', '땅속의 하얀 보석, 무! 시원하고 달콤한 내 맛을 느껴봐.'),
-(7, 'D구역-01', '강원도 춘천시', 140, 170000, '감자', 'available', '포근한 땅속에서 자란 감자! 포슬포슬한 식감이 내 자랑이야.'),
-(8, 'D구역-02', '강원도 춘천시', 130, 160000, '당근', 'rented', '주황빛 비타민의 화신! 건강한 당근이 여기 있어요.')
+(5, 'C구역-01', '전남 나주시', 180, 220000, '배추', 'available', 'The star of kimchi! I''m the cabbage king with white flesh and crispy texture.'),
+(6, 'C구역-02', '전남 나주시', 160, 190000, '무', 'available', 'The white gem underground, radish! Feel my cool and sweet taste.'),
+(7, 'D구역-01', '강원도 춘천시', 140, 170000, '감자', 'available', 'A potato grown in the cozy underground! My fluffy texture is my pride.'),
+(8, 'D구역-02', '강원도 춘천시', 130, 160000, '당근', 'rented', 'The orange incarnation of vitamins! A healthy carrot is here.')
 ON CONFLICT (id) DO NOTHING;
 
 -- 시퀀스 값 업데이트
@@ -81,11 +81,11 @@ INSERT INTO credit_transactions (nickname, transaction_type, amount, related_id,
 ON CONFLICT DO NOTHING;
 
 -- 9. 플랜트 카드 데이터 (plant_cards)
-INSERT INTO plant_cards (farm_plot_id, persona, image_url, video_url, event_message) VALUES 
-(1, '나는 겉절이계의 아이돌, 아삭함으로 세상을 평정할 상추王子! 오늘도 싱싱하게 자라고 있어요~', 'https://example.com/lettuce_card.jpg', 'https://example.com/lettuce_video.mp4', '오늘 물을 충분히 마셔서 더욱 싱싱해졌어요!'),
-(2, '태양의 맛을 가득 품은 정열의 토마토. 내 과즙은 멈추지 않아! 빨갛게 익어가는 중이에요.', 'https://example.com/tomato_card.jpg', 'https://example.com/tomato_video.mp4', '햇살을 받아 더욱 달콤해지고 있어요!'),
-(3, '새콤달콤한 첫사랑의 기억, 그게 바로 나, 딸기 공주님이야. 하트 모양으로 자라는 중!', 'https://example.com/strawberry_card.jpg', 'https://example.com/strawberry_video.mp4', '꽃이 피기 시작했어요! 곧 열매가 맺힐 거예요.'),
-(4, '수분감 200%! 쿨하고 시크한 오이. 내면은 촉촉해. 길쭉하게 쭉쭉 자라는 중!', 'https://example.com/cucumber_card.jpg', 'https://example.com/cucumber_video.mp4', '오늘 5cm나 더 자랐어요!')
+INSERT INTO plant_cards (farm_plot_id, persona, image_url, video_url, event_message) VALUES
+(1, 'I am the Lettuce Prince, the idol of the fresh salad world, destined to conquer all with my crispiness! I am growing fresh and vibrant today~', 'https://example.com/lettuce_card.jpg', 'https://example.com/lettuce_video.mp4', 'I drank plenty of water today and became even fresher!'),
+(2, 'A tomato of passion, full of the sun''s flavor. My juice is unstoppable! Currently ripening to a brilliant red.', 'https://example.com/tomato_card.jpg', 'https://example.com/tomato_video.mp4', 'I''m becoming sweeter under the sunlight!'),
+(3, 'The memory of a sweet and sour first love, that''s me, the Strawberry Princess. Growing in the shape of a heart!', 'https://example.com/strawberry_card.jpg', 'https://example.com/strawberry_video.mp4', 'My flowers have started blooming! Fruits will be coming soon.'),
+(4, '200% hydration! A cool and chic cucumber, moist to the core. I''m busy growing long and straight!', 'https://example.com/cucumber_card.jpg', 'https://example.com/cucumber_video.mp4', 'I grew 5cm more today!')
 ON CONFLICT DO NOTHING;
 
 -- migrate:down

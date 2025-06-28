@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"smartfarm-be/internal/ports/outbound"
 	"smartfarm-be/pkg/config"
@@ -18,11 +19,72 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
 	"google.golang.org/api/option"
+	veo "google.golang.org/genai"
 )
 
 type GoogleAIGenerator struct {
-	client *genai.Client
-	config *config.GeminiConfig
+	client    *genai.Client
+	veoClient *veo.Client
+	config    *config.GeminiConfig
+	veoConfig *config.VeoConfig
+}
+
+// Veo API 구조체들
+type VeoVideoRequest struct {
+	Instances  []VeoInstance `json:"instances"`
+	Parameters VeoParameters `json:"parameters"`
+}
+
+type VeoInstance struct {
+	Prompt string   `json:"prompt"`
+	Image  *VeoFile `json:"image,omitempty"`
+}
+
+type VeoFile struct {
+	BytesBase64Encoded string `json:"bytesBase64Encoded,omitempty"`
+	GcsUri             string `json:"gcsUri,omitempty"`
+	MimeType           string `json:"mimeType"`
+}
+
+type VeoParameters struct {
+	AspectRatio      string `json:"aspectRatio,omitempty"`
+	DurationSeconds  int    `json:"durationSeconds,omitempty"`
+	EnhancePrompt    bool   `json:"enhancePrompt,omitempty"`
+	NegativePrompt   string `json:"negativePrompt,omitempty"`
+	PersonGeneration string `json:"personGeneration,omitempty"`
+	SampleCount      int    `json:"sampleCount,omitempty"`
+	Seed             uint32 `json:"seed,omitempty"`
+	StorageUri       string `json:"storageUri,omitempty"`
+}
+
+type VeoVideoResponse struct {
+	Name string `json:"name"`
+}
+
+type VeoOperationStatusRequest struct {
+	OperationName string `json:"operationName"`
+}
+
+type VeoOperationResponse struct {
+	Name     string       `json:"name"`
+	Done     bool         `json:"done"`
+	Response *VeoResponse `json:"response,omitempty"`
+	Error    *VeoError    `json:"error,omitempty"`
+}
+
+type VeoResponse struct {
+	Type   string     `json:"@type"`
+	Videos []VeoVideo `json:"videos"`
+}
+
+type VeoVideo struct {
+	GcsUri   string `json:"gcsUri"`
+	MimeType string `json:"mimeType"`
+}
+
+type VeoError struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // Gemini REST API 구조체들
@@ -66,21 +128,42 @@ type GeminiInlineData struct {
 }
 
 func NewGoogleAIGenerator(i do.Injector) (outbound.AIGenerator, error) {
-	cfg := do.MustInvoke[*config.GeminiConfig](i)
+	geminiCfg := do.MustInvoke[*config.GeminiConfig](i)
 
-	if cfg.APIKey == "" {
+	// VeoConfig는 선택적으로 주입 (없으면 nil로 처리)
+	var veoConfig *config.VeoConfig
+	defer func() {
+		if r := recover(); r != nil {
+			// VeoConfig가 등록되지 않은 경우 panic이 발생하므로 nil로 처리
+			veoConfig = nil
+		}
+	}()
+
+	// VeoConfig 주입 시도
+	func() {
+		veoConfig = do.MustInvoke[*config.VeoConfig](i)
+	}()
+
+	if geminiCfg.APIKey == "" {
 		log.Warn().Msg("Google AI API key not provided, using mock responses")
-		return &GoogleAIGenerator{config: cfg}, nil
+		return nil, fmt.Errorf("Google AI API key not provided")
 	}
 
-	client, err := genai.NewClient(context.Background(), option.WithAPIKey(cfg.APIKey))
+	client, err := genai.NewClient(context.Background(), option.WithAPIKey(geminiCfg.APIKey))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Gemini client: %w", err)
 	}
 
+	veoClient, err := veo.NewClient(context.Background(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Veo client: %w", err)
+	}
+
 	return &GoogleAIGenerator{
-		client: client,
-		config: cfg,
+		client:    client,
+		config:    geminiCfg,
+		veoConfig: veoConfig,
+		veoClient: veoClient,
 	}, nil
 }
 
@@ -96,7 +179,7 @@ func (g *GoogleAIGenerator) GeneratePersona(ctx context.Context, prompt string) 
 	model.SetMaxOutputTokens(200)
 
 	fullPrompt := fmt.Sprintf(`
-다음 농작물 설명을 바탕으로 친근하고 매력적인 페르소나를 생성해주세요:
+다음 농작물 설명을 바탕으로 친근하고 매력적인 페르소나를 영어로 생성해주세요:
 "%s"
 
 요구사항:
@@ -107,6 +190,7 @@ func (g *GoogleAIGenerator) GeneratePersona(ctx context.Context, prompt string) 
 - SNS에서 사용할 수 있는 톤앤매너
 
 예시: "안녕! 나는 햇살을 받고 자란 싱싱한 상추야. 아삭한 식감으로 여러분의 식탁을 더 건강하게 만들어줄게!"
+주의: 영어로 작성하시오.
 `, prompt)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
@@ -147,8 +231,16 @@ func (g *GoogleAIGenerator) GenerateEventMessage(ctx context.Context, persona, e
 - 이모지 포함 가능
 - 80자 이내로 간결하게
 - 친근하고 재미있게
+- 이벤트의 성격과 목적에 맞는 메시지 작성
+- 반드시 성격을 중요시 할 것
 
-예시: "🌱 드디어 나의 플랜트카드가 완성됐어! 내 성장 과정을 영상으로 만나보세요 ✨"
+이벤트 별 예시 (밝은 성격):
+- 발아: "🌱 휴~! 발아했어요! 내 성장 과정을 영상으로 만나보세요 ✨"
+- 성장: "💪 쑥쑥 자라고 있어요! 오늘의 성장 소식을 전해드려요 🌿"
+- 수확: "🌾 수확의 계절이 왔어요! 오늘이 제가 가장 맛있는 날이에요 😋"
+- 건강: "☔️ 비가 많이 오네요! 걱정 마세요, 저는 잘 지내고 있답니다 🌱💪"
+
+주어진 페르소나의 성격을 파악하여 적절한 메시지를 생성해주세요.
 `, persona, event)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
@@ -176,17 +268,7 @@ func (g *GoogleAIGenerator) GenerateImage(ctx context.Context, prompt string) (s
 
 	// 캐릭터 이미지 생성에 특화된 프롬프트
 	fullPrompt := fmt.Sprintf(`
-Create a cute and friendly cartoon character image for: "%s"
-
-Requirements:
-- Cartoon style, colorful and vibrant
-- Friendly and approachable character design
-- Suitable for social media sharing (SNS)
-- Korean-style cute aesthetic
-- High quality, detailed illustration
-- 1:1 aspect ratio (square format)
-- Agricultural theme with farm elements
-- Without any text on the image
+Create a cute and friendly cartoon character image for sns: "%s"
 `, prompt)
 
 	// REST API 요청 준비
@@ -291,18 +373,118 @@ func (g *GoogleAIGenerator) saveImageToFile(imageData []byte, fileName string) (
 	return imageURL, nil
 }
 
-// GenerateVideo는 주어진 프롬프트와 이미지로 비디오를 생성합니다.
-// TODO: 실제 Veo API를 호출하여 비디오 생성 로직 구현 필요
-func (g *GoogleAIGenerator) GenerateVideo(ctx context.Context, persona, imageURL string) (string, error) {
-	// 현재는 목업 URL 반환 (추후 Veo API 연동)
-	log.Info().Str("persona", persona).Str("image_url", imageURL).Msg("video generation requested (mock)")
-	return "https://example.com/generated-video.mp4", nil
+func (g *GoogleAIGenerator) GenerateVideo(ctx context.Context, prompt, imageURL string) (string, error) {
+
+	imageData, err := os.ReadFile(path.Join(".", imageURL))
+	if err != nil {
+		return "", fmt.Errorf("failed to read image file: %w", err)
+	}
+
+	if g.veoConfig == nil {
+		log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo video generation requested (mock - no VEO config)")
+		return "", nil
+	}
+
+	if g.veoClient == nil {
+		return "", fmt.Errorf("veo client is not initialized")
+	}
+
+	videoConfig := &veo.GenerateVideosConfig{
+		AspectRatio:      "9:16",
+		PersonGeneration: "dont_allow",
+		NumberOfVideos:   1,
+	}
+	operation, err := g.veoClient.Models.GenerateVideos(ctx, "veo-2.0-generate-001", prompt, &veo.Image{
+		ImageBytes: imageData,
+		MIMEType:   "image/png",
+	}, videoConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate video: %w", err)
+	}
+	if operation == nil {
+		return "", fmt.Errorf("received nil operation from GenerateVideos")
+	}
+	for !operation.Done {
+		time.Sleep(10 * time.Second)
+		operation, err = g.veoClient.Operations.GetVideosOperation(ctx, operation, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to get operation status: %w", err)
+		}
+		if operation == nil {
+			return "", fmt.Errorf("received nil operation from GetVideosOperation")
+		}
+	}
+	if operation.Response == nil {
+		return "", fmt.Errorf("operation completed but response is nil")
+	}
+	for n, video := range operation.Response.GeneratedVideos {
+		_, err := g.veoClient.Files.Download(ctx, video.Video, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to download video file")
+			continue
+		}
+		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write video file: %w", err)
+		}
+		return fname, nil
+	}
+	return "", fmt.Errorf("no video data found in Veo response")
 }
 
-// GenerateVideoFromPrompt는 텍스트 프롬프트와 이미지를 사용하여 Veo3로 쇼츠 비디오를 생성합니다.
-// TODO: 실제 Veo3 API를 호출하여 비디오 생성 로직 구현 필요
+// GenerateVideoFromPrompt는 텍스트 프롬프트와 이미지를 사용하여 Veo로 쇼츠 비디오를 생성합니다.
 func (g *GoogleAIGenerator) GenerateVideoFromPrompt(ctx context.Context, prompt, imageURL string) (string, error) {
-	// 현재는 목업 URL 반환 (추후 Veo3 API 연동)
-	log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo3 video generation requested (mock)")
-	return "https://example.com/veo3-generated-video.mp4", nil
+	// VeoConfig가 없으면 mock 응답
+	if g.veoConfig == nil {
+		log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("Veo video generation requested (mock - no VEO config)")
+		return "", nil
+	}
+
+	if g.veoClient == nil {
+		return "", fmt.Errorf("veo client is not initialized")
+	}
+
+	videoConfig := &veo.GenerateVideosConfig{
+		AspectRatio:      "1:1",
+		PersonGeneration: "dont_allow",
+		NumberOfVideos:   1,
+	}
+	operation, err := g.veoClient.Models.GenerateVideos(ctx, "veo-2.0-generate-001", prompt, nil, videoConfig)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate video: %w", err)
+	}
+	if operation == nil {
+		return "", fmt.Errorf("received nil operation from GenerateVideos")
+	}
+
+	for !operation.Done {
+		time.Sleep(10 * time.Second)
+		operation, err = g.veoClient.Operations.GetVideosOperation(ctx, operation, nil)
+		if err != nil {
+			return "", fmt.Errorf("failed to get operation status: %w", err)
+		}
+		if operation == nil {
+			return "", fmt.Errorf("received nil operation from GetVideosOperation")
+		}
+	}
+
+	if operation.Response == nil {
+		return "", fmt.Errorf("operation completed but response is nil")
+	}
+
+	for n, video := range operation.Response.GeneratedVideos {
+		_, err := g.veoClient.Files.Download(ctx, video.Video, nil)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to download video file")
+			continue
+		}
+		fname := fmt.Sprintf("uploads/video_%d.mp4", n)
+		err = os.WriteFile(fname, video.Video.VideoBytes, 0644)
+		if err != nil {
+			return "", fmt.Errorf("failed to write video file: %w", err)
+		}
+		return fname, nil
+	}
+	return "", fmt.Errorf("no video data found in Veo response")
 }

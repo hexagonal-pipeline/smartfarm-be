@@ -42,7 +42,7 @@ func NewPlantCardUsecase(i do.Injector) (*PlantCardUsecase, error) {
 }
 
 // GeneratePlantCard creates a new plant card for a given farm plot with persona, image, and video.
-func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID int64) (*domain.PlantCard, error) {
+func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID int64, event string) (*domain.PlantCard, error) {
 	// 1. 농장 정보 조회
 	farmPlot, err := uc.farmRepo.GetByID(ctx, farmPlotID)
 	if err != nil {
@@ -65,14 +65,14 @@ func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID in
 	}
 
 	// 3. 이벤트 메시지 생성 (SNS 공유용)
-	eventMessage, err := uc.aiGen.GenerateEventMessage(ctx, persona, "plant_card_creation")
+	eventMessage, err := uc.aiGen.GenerateEventMessage(ctx, persona, event)
 	if err != nil {
 		log.Error().Err(err).Str("persona", persona).Msg("failed to generate event message")
 		return nil, fmt.Errorf("failed to generate event message: %w", err)
 	}
 
 	// 4. 이미지 생성
-	imagePrompt := fmt.Sprintf("A cute and friendly character representing: %s. Style: cartoon, colorful, suitable for social media sharing", persona)
+	imagePrompt := fmt.Sprintf("A cute and friendly character representing: %s. Style: cartoon, colorful, suitable for social media sharing, no text no text please please never draw text on the image", persona)
 	imageURL, err := uc.aiGen.GenerateImage(ctx, imagePrompt)
 	if err != nil {
 		log.Error().Err(err).Str("prompt", imagePrompt).Msg("failed to generate image")
@@ -80,8 +80,8 @@ func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID in
 	}
 
 	// 5. Veo3를 이용한 쇼츠 비디오 생성
-	videoPrompt := fmt.Sprintf("Create a short engaging video featuring this character: %s. The character says: %s", persona, eventMessage)
-	videoURL, err := uc.aiGen.GenerateVideoFromPrompt(ctx, videoPrompt, imageURL)
+	videoPrompt := fmt.Sprintf("Create a short engaging video featuring this character: %s.\nEvent message: %s", persona, eventMessage)
+	videoURL, err := uc.aiGen.GenerateVideo(ctx, videoPrompt, imageURL)
 	if err != nil {
 		log.Error().Err(err).Str("prompt", videoPrompt).Msg("failed to generate video with Veo3")
 		return nil, fmt.Errorf("failed to generate video: %w", err)
