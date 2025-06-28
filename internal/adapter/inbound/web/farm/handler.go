@@ -1,18 +1,18 @@
 package farm
 
 import (
-	"smartfarm-be/internal/ports"
+	"smartfarm-be/internal/usecase"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/samber/do/v2"
 )
 
 type Handler struct {
-	useCase ports.FarmUseCase
+	useCase *usecase.FarmService
 }
 
 func NewHandler(injector do.Injector) (*Handler, error) {
-	useCase, err := do.Invoke[ports.FarmUseCase](injector)
+	useCase, err := do.Invoke[*usecase.FarmService](injector)
 	if err != nil {
 		return nil, err
 	}

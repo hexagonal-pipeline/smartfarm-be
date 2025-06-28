@@ -2,50 +2,45 @@ package postgres
 
 import (
 	"context"
-	"log"
 
+	"smartfarm-be/internal/adapter/outbound/db"
 	"smartfarm-be/internal/domain"
-	"smartfarm-be/internal/ports"
+	farmoutbound "smartfarm-be/internal/ports/outbound"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/samber/do/v2"
 )
 
 type FarmRepository struct {
-	db *pgxpool.Pool
+	querier db.Querier
 }
 
-func NewFarmRepository(injector do.Injector) (ports.FarmRepository, error) {
-	db, err := do.Invoke[*pgxpool.Pool](injector)
+func NewFarmRepository(injector do.Injector) (farmoutbound.FarmRepository, error) {
+	querier, err := do.Invoke[db.Querier](injector)
 	if err != nil {
 		return nil, err
 	}
 
-	return &FarmRepository{db: db}, nil
+	return &FarmRepository{querier: querier}, nil
+}
+
+func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
+	return domain.FarmPlot{
+		ID:          int64(p.ID),
+		Name:        p.Name,
+		IsAvailable: p.Status.String == "available" && p.Status.Valid,
+	}
 }
 
 func (r *FarmRepository) ListAvailable(ctx context.Context) ([]domain.FarmPlot, error) {
-	rows, err := r.db.Query(ctx, "SELECT id, name, status FROM farm_plots WHERE status = 'available'")
+	dbPlots, err := r.querier.ListAvailablePlots(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	var plots []domain.FarmPlot
-	for rows.Next() {
-		var plot domain.FarmPlot
-		var status string
-		if err := rows.Scan(&plot.ID, &plot.Name, &status); err != nil {
-			log.Printf("Error scanning farm plot: %v", err)
-			continue
-		}
-		plot.IsAvailable = (status == "available")
-		plots = append(plots, plot)
+	domainPlots := make([]domain.FarmPlot, 0, len(dbPlots))
+	for _, p := range dbPlots {
+		domainPlots = append(domainPlots, toDomainFarmPlot(p))
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return plots, nil
+	return domainPlots, nil
 }
