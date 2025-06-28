@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateCommissionWork(ctx context.Context, arg CreateCommissionWorkParams) (CommissionWork, error)
+	CreatePlantCard(ctx context.Context, arg CreatePlantCardParams) (PlantCard, error)
 	CreateRaid(ctx context.Context, arg CreateRaidParams) (Raid, error)
 	CreateRental(ctx context.Context, arg CreateRentalParams) (Rental, error)
 	CreateUserStats(ctx context.Context, nickname string) (UserStat, error)

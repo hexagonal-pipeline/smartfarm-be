@@ -42,6 +42,15 @@ type FarmPlot struct {
 	PersonaPrompt pgtype.Text      `json:"persona_prompt"`
 }
 
+type PlantCard struct {
+	ID         int32              `json:"id"`
+	FarmPlotID int32              `json:"farm_plot_id"`
+	Persona    string             `json:"persona"`
+	ImageUrl   pgtype.Text        `json:"image_url"`
+	VideoUrl   pgtype.Text        `json:"video_url"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type Raid struct {
 	ID               int32            `json:"id"`
 	Title            string           `json:"title"`
