@@ -7,5 +7,6 @@ import (
 )
 
 func ProvideConfig(injector do.Injector) {
+	do.Provide(injector, config.NewGeminiConfig)
 	do.Provide(injector, config.NewPostgresConfig)
 }
