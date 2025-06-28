@@ -24,14 +24,15 @@ func NewFarmRepository(injector do.Injector) (outbound.FarmRepository, error) {
 
 func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
 	return domain.FarmPlot{
-		ID:          int64(p.ID),
-		Name:        p.Name,
-		Location:    p.Location.String,
-		SizeSqm:     p.SizeSqm,
-		MonthlyRent: p.MonthlyRent,
-		CropType:    p.CropType.String,
-		Status:      p.Status.String,
-		CreatedAt:   p.CreatedAt.Time,
+		ID:            int64(p.ID),
+		Name:          p.Name,
+		Location:      p.Location.String,
+		SizeSqm:       p.SizeSqm,
+		MonthlyRent:   p.MonthlyRent,
+		CropType:      p.CropType.String,
+		Status:        p.Status.String,
+		CreatedAt:     p.CreatedAt.Time,
+		PersonaPrompt: &p.PersonaPrompt.String,
 	}
 }
 
