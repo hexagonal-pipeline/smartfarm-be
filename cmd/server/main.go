@@ -38,6 +38,8 @@ func main() {
 
 	app := do.MustInvoke[*fiber.App](injector)
 
+	setupSwagger(app)
+
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
