@@ -73,3 +73,13 @@ func (r *FarmRepository) ListByRenter(ctx context.Context, renterNickname string
 
 	return plots, nil
 }
+
+func (r *FarmRepository) GetByID(ctx context.Context, id int64) (*domain.FarmPlot, error) {
+	dbPlot, err := r.q.GetPlot(ctx, int32(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get farm plot by id %d: %w", id, err)
+	}
+
+	plot := toDomainFarmPlot(dbPlot)
+	return &plot, nil
+}
