@@ -151,6 +151,7 @@ CREATE TABLE public.plant_cards (
     persona text NOT NULL,
     image_url character varying(255),
     video_url character varying(255),
+    event_message text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -536,6 +537,20 @@ CREATE INDEX idx_credit_transactions_nickname ON public.credit_transactions USIN
 
 
 --
+-- Name: idx_plant_cards_created_at; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_plant_cards_created_at ON public.plant_cards USING btree (created_at DESC);
+
+
+--
+-- Name: idx_plant_cards_farm_plot_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX idx_plant_cards_farm_plot_id ON public.plant_cards USING btree (farm_plot_id);
+
+
+--
 -- Name: idx_raid_participations_nickname; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -602,6 +617,14 @@ ALTER TABLE ONLY public.credit_transactions
 
 
 --
+-- Name: plant_cards plant_cards_farm_plot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.plant_cards
+    ADD CONSTRAINT plant_cards_farm_plot_id_fkey FOREIGN KEY (farm_plot_id) REFERENCES public.farm_plots(id) ON DELETE CASCADE;
+
+
+--
 -- Name: raid_participations raid_participations_participant_nickname_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -630,7 +653,7 @@ ALTER TABLE ONLY public.raids
 --
 
 ALTER TABLE ONLY public.rentals
-    ADD CONSTRAINT rentals_plot_id_fkey FOREIGN KEY (plot_id) REFERENCES public.farm_plots(id) ON DELETE CASCADE;
+    ADD CONSTRAINT rentals_plot_id_fkey FOREIGN KEY (plot_id) REFERENCES public.farm_plots(id);
 
 
 --
@@ -647,14 +670,6 @@ ALTER TABLE ONLY public.rentals
 
 ALTER TABLE ONLY public.revenue_records
     ADD CONSTRAINT revenue_records_nickname_fkey FOREIGN KEY (nickname) REFERENCES public.user_stats(nickname);
-
-
---
--- Name: plant_cards plant_cards_farm_plot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.plant_cards
-    ADD CONSTRAINT plant_cards_farm_plot_id_fkey FOREIGN KEY (farm_plot_id) REFERENCES public.farm_plots(id) ON DELETE CASCADE;
 
 
 --

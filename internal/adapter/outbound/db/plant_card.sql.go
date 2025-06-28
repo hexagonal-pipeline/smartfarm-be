@@ -16,18 +16,20 @@ INSERT INTO plant_cards (
     farm_plot_id,
     persona,
     image_url,
-    video_url
+    video_url,
+    event_message
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5
 )
-RETURNING id, farm_plot_id, persona, image_url, video_url, created_at
+RETURNING id, farm_plot_id, persona, image_url, video_url, event_message, created_at
 `
 
 type CreatePlantCardParams struct {
-	FarmPlotID int32       `json:"farm_plot_id"`
-	Persona    string      `json:"persona"`
-	ImageUrl   pgtype.Text `json:"image_url"`
-	VideoUrl   pgtype.Text `json:"video_url"`
+	FarmPlotID   int32       `json:"farm_plot_id"`
+	Persona      string      `json:"persona"`
+	ImageUrl     pgtype.Text `json:"image_url"`
+	VideoUrl     pgtype.Text `json:"video_url"`
+	EventMessage pgtype.Text `json:"event_message"`
 }
 
 func (q *Queries) CreatePlantCard(ctx context.Context, arg CreatePlantCardParams) (PlantCard, error) {
@@ -36,6 +38,7 @@ func (q *Queries) CreatePlantCard(ctx context.Context, arg CreatePlantCardParams
 		arg.Persona,
 		arg.ImageUrl,
 		arg.VideoUrl,
+		arg.EventMessage,
 	)
 	var i PlantCard
 	err := row.Scan(
@@ -44,7 +47,59 @@ func (q *Queries) CreatePlantCard(ctx context.Context, arg CreatePlantCardParams
 		&i.Persona,
 		&i.ImageUrl,
 		&i.VideoUrl,
+		&i.EventMessage,
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const getPlantCardByID = `-- name: GetPlantCardByID :one
+SELECT id, farm_plot_id, persona, image_url, video_url, event_message, created_at FROM plant_cards WHERE id = $1
+`
+
+func (q *Queries) GetPlantCardByID(ctx context.Context, id int32) (PlantCard, error) {
+	row := q.db.QueryRow(ctx, getPlantCardByID, id)
+	var i PlantCard
+	err := row.Scan(
+		&i.ID,
+		&i.FarmPlotID,
+		&i.Persona,
+		&i.ImageUrl,
+		&i.VideoUrl,
+		&i.EventMessage,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getPlantCardsByFarmPlotID = `-- name: GetPlantCardsByFarmPlotID :many
+SELECT id, farm_plot_id, persona, image_url, video_url, event_message, created_at FROM plant_cards WHERE farm_plot_id = $1 ORDER BY created_at DESC
+`
+
+func (q *Queries) GetPlantCardsByFarmPlotID(ctx context.Context, farmPlotID int32) ([]PlantCard, error) {
+	rows, err := q.db.Query(ctx, getPlantCardsByFarmPlotID, farmPlotID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []PlantCard{}
+	for rows.Next() {
+		var i PlantCard
+		if err := rows.Scan(
+			&i.ID,
+			&i.FarmPlotID,
+			&i.Persona,
+			&i.ImageUrl,
+			&i.VideoUrl,
+			&i.EventMessage,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -10,6 +10,8 @@ type AIGenerator interface {
 	GenerateEventMessage(ctx context.Context, persona string, event string) (string, error)
 	// GenerateImage creates an image based on a given prompt.
 	GenerateImage(ctx context.Context, prompt string) (string, error) // returns image URL
-	// GenerateVideo creates a short video based on a persona and an image.
+	// GenerateVideo creates a short video using Veo3 model based on persona and image.
 	GenerateVideo(ctx context.Context, persona, imageURL string) (string, error) // returns video URL
+	// GenerateVideoFromPrompt creates a short video using Veo3 model based on text prompt and image.
+	GenerateVideoFromPrompt(ctx context.Context, prompt, imageURL string) (string, error) // returns video URL
 }
