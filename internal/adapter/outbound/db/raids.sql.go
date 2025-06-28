@@ -69,7 +69,7 @@ ORDER BY rp.created_at DESC
 
 type GetNicknameRaidHistoryRow struct {
 	ID                  int32            `json:"id"`
-	RaidID              pgtype.Int4      `json:"raid_id"`
+	RaidID              int32            `json:"raid_id"`
 	ParticipantNickname string           `json:"participant_nickname"`
 	Quantity            int32            `json:"quantity"`
 	ExpectedRevenue     int32            `json:"expected_revenue"`
@@ -172,7 +172,7 @@ ORDER BY rp.created_at DESC
 
 type GetRaidParticipationsRow struct {
 	ID                  int32            `json:"id"`
-	RaidID              pgtype.Int4      `json:"raid_id"`
+	RaidID              int32            `json:"raid_id"`
 	ParticipantNickname string           `json:"participant_nickname"`
 	Quantity            int32            `json:"quantity"`
 	ExpectedRevenue     int32            `json:"expected_revenue"`
@@ -181,7 +181,7 @@ type GetRaidParticipationsRow struct {
 	RaidTitle           string           `json:"raid_title"`
 }
 
-func (q *Queries) GetRaidParticipations(ctx context.Context, raidID pgtype.Int4) ([]GetRaidParticipationsRow, error) {
+func (q *Queries) GetRaidParticipations(ctx context.Context, raidID int32) ([]GetRaidParticipationsRow, error) {
 	rows, err := q.db.Query(ctx, getRaidParticipations, raidID)
 	if err != nil {
 		return nil, err
@@ -217,10 +217,10 @@ RETURNING id, raid_id, participant_nickname, quantity, expected_revenue, status,
 `
 
 type JoinRaidParams struct {
-	RaidID              pgtype.Int4 `json:"raid_id"`
-	ParticipantNickname string      `json:"participant_nickname"`
-	Quantity            int32       `json:"quantity"`
-	ExpectedRevenue     int32       `json:"expected_revenue"`
+	RaidID              int32  `json:"raid_id"`
+	ParticipantNickname string `json:"participant_nickname"`
+	Quantity            int32  `json:"quantity"`
+	ExpectedRevenue     int32  `json:"expected_revenue"`
 }
 
 func (q *Queries) JoinRaid(ctx context.Context, arg JoinRaidParams) (RaidParticipation, error) {

@@ -19,7 +19,7 @@ type Querier interface {
 	GetNicknameRentals(ctx context.Context, renterNickname string) ([]GetNicknameRentalsRow, error)
 	GetPlot(ctx context.Context, id int32) (FarmPlot, error)
 	GetRaidDetails(ctx context.Context, id int32) (GetRaidDetailsRow, error)
-	GetRaidParticipations(ctx context.Context, raidID pgtype.Int4) ([]GetRaidParticipationsRow, error)
+	GetRaidParticipations(ctx context.Context, raidID int32) ([]GetRaidParticipationsRow, error)
 	GetRental(ctx context.Context, id int32) (GetRentalRow, error)
 	GetUserStats(ctx context.Context, nickname string) (UserStat, error)
 	IncrementSuccessfulRaids(ctx context.Context, nickname string) (UserStat, error)

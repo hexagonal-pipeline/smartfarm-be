@@ -19,7 +19,7 @@ RETURNING id, renter_nickname, plot_id, start_date, end_date, monthly_rent, stat
 
 type CreateRentalParams struct {
 	RenterNickname string      `json:"renter_nickname"`
-	PlotID         pgtype.Int4 `json:"plot_id"`
+	PlotID         int32       `json:"plot_id"`
 	StartDate      pgtype.Date `json:"start_date"`
 	EndDate        pgtype.Date `json:"end_date"`
 	MonthlyRent    int32       `json:"monthly_rent"`
@@ -58,7 +58,7 @@ ORDER BY r.start_date DESC
 type GetNicknameRentalsRow struct {
 	ID             int32            `json:"id"`
 	RenterNickname string           `json:"renter_nickname"`
-	PlotID         pgtype.Int4      `json:"plot_id"`
+	PlotID         int32            `json:"plot_id"`
 	StartDate      pgtype.Date      `json:"start_date"`
 	EndDate        pgtype.Date      `json:"end_date"`
 	MonthlyRent    int32            `json:"monthly_rent"`
@@ -113,7 +113,7 @@ WHERE r.id = $1
 type GetRentalRow struct {
 	ID             int32            `json:"id"`
 	RenterNickname string           `json:"renter_nickname"`
-	PlotID         pgtype.Int4      `json:"plot_id"`
+	PlotID         int32            `json:"plot_id"`
 	StartDate      pgtype.Date      `json:"start_date"`
 	EndDate        pgtype.Date      `json:"end_date"`
 	MonthlyRent    int32            `json:"monthly_rent"`
