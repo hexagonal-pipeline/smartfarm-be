@@ -43,3 +43,7 @@ down:
 
 downv:
 	docker compose -f deploy/docker-compose-postgres.yml down
+
+docker-build:
+	docker build -t smartfarm-be .
+	docker image rm smartfarm-be
