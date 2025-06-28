@@ -1,10 +1,18 @@
 package googleai
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
 	"smartfarm-be/internal/ports/outbound"
 	"smartfarm-be/pkg/config"
+	"time"
 
 	"github.com/google/generative-ai-go/genai"
 	"github.com/rs/zerolog/log"
@@ -15,6 +23,46 @@ import (
 type GoogleAIGenerator struct {
 	client *genai.Client
 	config *config.GeminiConfig
+}
+
+// Gemini REST API 구조체들
+type GeminiImageRequest struct {
+	Contents         []GeminiContent `json:"contents"`
+	GenerationConfig GeminiGenConfig `json:"generationConfig"`
+}
+
+type GeminiContent struct {
+	Parts []GeminiPart `json:"parts"`
+}
+
+type GeminiPart struct {
+	Text string `json:"text"`
+}
+
+type GeminiGenConfig struct {
+	ResponseModalities []string `json:"responseModalities"`
+}
+
+type GeminiImageResponse struct {
+	Candidates []GeminiCandidate `json:"candidates"`
+}
+
+type GeminiCandidate struct {
+	Content GeminiResponseContent `json:"content"`
+}
+
+type GeminiResponseContent struct {
+	Parts []GeminiResponsePart `json:"parts"`
+}
+
+type GeminiResponsePart struct {
+	Text       string            `json:"text,omitempty"`
+	InlineData *GeminiInlineData `json:"inlineData,omitempty"`
+}
+
+type GeminiInlineData struct {
+	MimeType string `json:"mimeType"`
+	Data     string `json:"data"`
 }
 
 func NewGoogleAIGenerator(i do.Injector) (outbound.AIGenerator, error) {
@@ -119,11 +167,127 @@ func (g *GoogleAIGenerator) GenerateEventMessage(ctx context.Context, persona, e
 }
 
 // GenerateImage는 주어진 프롬프트로 이미지를 생성합니다.
-// TODO: 실제 Imagen API를 호출하여 이미지 생성 로직 구현 필요
 func (g *GoogleAIGenerator) GenerateImage(ctx context.Context, prompt string) (string, error) {
-	// 현재는 목업 URL 반환 (추후 Imagen API 연동)
-	log.Info().Str("prompt", prompt).Msg("image generation requested (mock)")
-	return "https://example.com/generated-image.png", nil
+	if g.config.APIKey == "" {
+		// API 키가 없을 때 목업 응답
+		log.Info().Str("prompt", prompt).Msg("image generation requested (mock)")
+		return "https://example.com/generated-image.png", nil
+	}
+
+	// 캐릭터 이미지 생성에 특화된 프롬프트
+	fullPrompt := fmt.Sprintf(`
+Create a cute and friendly cartoon character image for: "%s"
+
+Requirements:
+- Cartoon style, colorful and vibrant
+- Friendly and approachable character design
+- Suitable for social media sharing (SNS)
+- Korean-style cute aesthetic
+- High quality, detailed illustration
+- 1:1 aspect ratio (square format)
+- Agricultural theme with farm elements
+`, prompt)
+
+	// REST API 요청 준비
+	requestBody := GeminiImageRequest{
+		Contents: []GeminiContent{
+			{
+				Parts: []GeminiPart{
+					{Text: fullPrompt},
+				},
+			},
+		},
+		GenerationConfig: GeminiGenConfig{
+			ResponseModalities: []string{"TEXT", "IMAGE"},
+		},
+	}
+
+	jsonData, err := json.Marshal(requestBody)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to marshal request")
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// HTTP 요청 생성
+	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent"
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create HTTP request")
+		return "", fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-goog-api-key", g.config.APIKey)
+
+	// HTTP 요청 실행
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to call Gemini API")
+		return "", fmt.Errorf("failed to call Gemini API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		log.Error().Int("status", resp.StatusCode).Str("body", string(body)).Msg("Gemini API error")
+		return "", fmt.Errorf("Gemini API error: %d - %s", resp.StatusCode, string(body))
+	}
+
+	// 응답 파싱
+	var geminiResp GeminiImageResponse
+	if err := json.NewDecoder(resp.Body).Decode(&geminiResp); err != nil {
+		log.Error().Err(err).Msg("failed to decode response")
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if len(geminiResp.Candidates) == 0 {
+		return "", fmt.Errorf("no candidates in Gemini response")
+	}
+
+	// 이미지 데이터 추출 및 저장
+	for _, part := range geminiResp.Candidates[0].Content.Parts {
+		if part.InlineData != nil && part.InlineData.Data != "" {
+			// Base64 디코딩
+			imageData, err := base64.StdEncoding.DecodeString(part.InlineData.Data)
+			if err != nil {
+				log.Error().Err(err).Msg("failed to decode base64 image")
+				continue
+			}
+
+			// 이미지 파일 저장
+			fileName := fmt.Sprintf("character_%d.png", time.Now().Unix())
+			imageURL, err := g.saveImageToFile(imageData, fileName)
+			if err != nil {
+				log.Error().Err(err).Str("file", fileName).Msg("failed to save generated image")
+				return "", fmt.Errorf("failed to save generated image: %w", err)
+			}
+
+			log.Info().Str("prompt", prompt).Str("image_url", imageURL).Msg("successfully generated image with Gemini 2.0")
+			return imageURL, nil
+		}
+	}
+
+	return "", fmt.Errorf("no image data found in Gemini response")
+}
+
+// saveImageToFile는 이미지 데이터를 파일로 저장하고 URL을 반환합니다.
+func (g *GoogleAIGenerator) saveImageToFile(imageData []byte, fileName string) (string, error) {
+	// uploads/images 디렉토리 생성
+	dir := "uploads/images"
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// 파일 저장
+	filePath := filepath.Join(dir, fileName)
+	if err := os.WriteFile(filePath, imageData, 0644); err != nil {
+		return "", fmt.Errorf("failed to write image file: %w", err)
+	}
+
+	// 정적 파일 URL 생성 (Fiber에서 /uploads 경로로 서빙)
+	imageURL := fmt.Sprintf("/uploads/images/%s", fileName)
+	return imageURL, nil
 }
 
 // GenerateVideo는 주어진 프롬프트와 이미지로 비디오를 생성합니다.
