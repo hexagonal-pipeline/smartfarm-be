@@ -24,6 +24,28 @@ func NewCommissionRepository(injector do.Injector) (outbound.CommissionRepositor
 	}, nil
 }
 
+func toDomainCommissionWork(w db.CommissionWork) *domain.CommissionWork {
+	return &domain.CommissionWork{
+		ID:                int64(w.ID),
+		RequesterNickname: w.RequesterNickname,
+		PlotID:            w.PlotID,
+		TaskType:          w.TaskType,
+		TaskDescription:   w.TaskDescription.String,
+		Status:            w.Status,
+		CreditCost:        w.CreditCost,
+		RequestedAt:       w.RequestedAt.Time,
+		CompletedAt:       &w.CompletedAt.Time,
+	}
+}
+
+func toDomainCommissionWorkSlice(works []db.CommissionWork) []domain.CommissionWork {
+	domainWorks := make([]domain.CommissionWork, len(works))
+	for i, w := range works {
+		domainWorks[i] = *toDomainCommissionWork(w)
+	}
+	return domainWorks
+}
+
 func (r *CommissionRepository) Create(ctx context.Context, arg domain.CommissionWork) (*domain.CommissionWork, error) {
 	created, err := r.Queries.CreateCommissionWork(ctx, db.CreateCommissionWorkParams{
 		RequesterNickname: arg.RequesterNickname,
@@ -39,18 +61,7 @@ func (r *CommissionRepository) Create(ctx context.Context, arg domain.Commission
 		return nil, err
 	}
 
-	// TODO: Mapper 함수로 분리하는 것을 고려
-	return &domain.CommissionWork{
-		ID:                int64(created.ID),
-		RequesterNickname: created.RequesterNickname,
-		PlotID:            created.PlotID,
-		TaskType:          created.TaskType,
-		TaskDescription:   created.TaskDescription.String,
-		Status:            created.Status,
-		CreditCost:        created.CreditCost,
-		RequestedAt:       created.RequestedAt.Time,
-		// CompletedAt은 생성 시점이므로 nil
-	}, nil
+	return toDomainCommissionWork(created), nil
 }
 
 func (r *CommissionRepository) FindByID(ctx context.Context, id int64) (*domain.CommissionWork, error) {
@@ -59,16 +70,14 @@ func (r *CommissionRepository) FindByID(ctx context.Context, id int64) (*domain.
 		return nil, err
 	}
 
-	// TODO: Mapper 함수로 분리하는 것을 고려
-	return &domain.CommissionWork{
-		ID:                int64(found.ID),
-		RequesterNickname: found.RequesterNickname,
-		PlotID:            found.PlotID,
-		TaskType:          found.TaskType,
-		TaskDescription:   found.TaskDescription.String,
-		Status:            found.Status,
-		CreditCost:        found.CreditCost,
-		RequestedAt:       found.RequestedAt.Time,
-		// CompletedAt 처리 필요
-	}, nil
+	return toDomainCommissionWork(found), nil
+}
+
+func (r *CommissionRepository) ListByStatus(ctx context.Context, status string) ([]domain.CommissionWork, error) {
+	works, err := r.Queries.ListCommissionWorksByStatus(ctx, status)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainCommissionWorkSlice(works), nil
 }

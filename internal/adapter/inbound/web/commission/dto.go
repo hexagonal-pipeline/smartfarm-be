@@ -25,6 +25,10 @@ type CommissionWorkResponse struct {
 	CompletedAt       *time.Time `json:"completed_at,omitempty"`
 }
 
+type CommissionWorkListResponse struct {
+	Items []*CommissionWorkResponse `json:"items"`
+}
+
 func NewCommissionWorkResponse(cw *domain.CommissionWork) *CommissionWorkResponse {
 	return &CommissionWorkResponse{
 		ID:                cw.ID,
@@ -37,4 +41,12 @@ func NewCommissionWorkResponse(cw *domain.CommissionWork) *CommissionWorkRespons
 		RequestedAt:       cw.RequestedAt,
 		CompletedAt:       cw.CompletedAt,
 	}
+}
+
+func NewCommissionWorkListResponse(works []domain.CommissionWork) *CommissionWorkListResponse {
+	items := make([]*CommissionWorkResponse, len(works))
+	for i, w := range works {
+		items[i] = NewCommissionWorkResponse(&w)
+	}
+	return &CommissionWorkListResponse{Items: items}
 }
