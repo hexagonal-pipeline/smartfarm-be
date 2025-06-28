@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"smartfarm-be/internal/adapter/outbound/db"
 	"smartfarm-be/pkg/config"
 	"smartfarm-be/pkg/database"
 
@@ -21,5 +22,14 @@ func ProvideDatabase(injector do.Injector) {
 		}
 
 		return pool, nil
+	})
+
+	do.Provide(injector, func(i do.Injector) (db.Querier, error) {
+		pool, err := do.Invoke[*pgxpool.Pool](i)
+		if err != nil {
+			return nil, err
+		}
+
+		return db.New(pool), nil
 	})
 }
