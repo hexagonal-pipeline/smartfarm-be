@@ -21,6 +21,8 @@ import (
 	"smartfarm-be/internal/di"
 
 	"github.com/joho/godotenv"
+
+	_ "smartfarm-be/docs"
 )
 
 func main() {
