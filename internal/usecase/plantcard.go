@@ -72,7 +72,7 @@ func (uc *PlantCardUsecase) GeneratePlantCard(ctx context.Context, farmPlotID in
 	}
 
 	// 4. 이미지 생성
-	imagePrompt := fmt.Sprintf("A cute and friendly character representing: %s. Style: cartoon, colorful, suitable for social media sharing", persona)
+	imagePrompt := fmt.Sprintf("A cute and friendly character representing: %s. Style: cartoon, colorful, suitable for social media sharing, no text no text please please never draw text on the image", persona)
 	imageURL, err := uc.aiGen.GenerateImage(ctx, imagePrompt)
 	if err != nil {
 		log.Error().Err(err).Str("prompt", imagePrompt).Msg("failed to generate image")

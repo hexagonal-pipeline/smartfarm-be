@@ -179,7 +179,7 @@ func (g *GoogleAIGenerator) GeneratePersona(ctx context.Context, prompt string) 
 	model.SetMaxOutputTokens(200)
 
 	fullPrompt := fmt.Sprintf(`
-다음 농작물 설명을 바탕으로 친근하고 매력적인 페르소나를 생성해주세요:
+다음 농작물 설명을 바탕으로 친근하고 매력적인 페르소나를 영어로 생성해주세요:
 "%s"
 
 요구사항:
@@ -190,6 +190,7 @@ func (g *GoogleAIGenerator) GeneratePersona(ctx context.Context, prompt string) 
 - SNS에서 사용할 수 있는 톤앤매너
 
 예시: "안녕! 나는 햇살을 받고 자란 싱싱한 상추야. 아삭한 식감으로 여러분의 식탁을 더 건강하게 만들어줄게!"
+주의: 영어로 작성하시오.
 `, prompt)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
@@ -267,18 +268,7 @@ func (g *GoogleAIGenerator) GenerateImage(ctx context.Context, prompt string) (s
 
 	// 캐릭터 이미지 생성에 특화된 프롬프트
 	fullPrompt := fmt.Sprintf(`
-Create a cute and friendly cartoon character image for: "%s"
-
-Requirements:
-- Cartoon style, colorful and vibrant
-- Friendly and approachable character design
-- Suitable for social media sharing (SNS)
-- Korean-style cute aesthetic
-- High quality, detailed illustration
-- 1:1 aspect ratio (square format)
-- Agricultural theme with farm elements
-- Without any text on the image
-- NEVER TEXT ON THE IMAGE
+Create a cute and friendly cartoon character image for sns: "%s"
 `, prompt)
 
 	// REST API 요청 준비
