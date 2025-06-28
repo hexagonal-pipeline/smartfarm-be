@@ -146,7 +146,7 @@ func NewGoogleAIGenerator(i do.Injector) (outbound.AIGenerator, error) {
 
 	if geminiCfg.APIKey == "" {
 		log.Warn().Msg("Google AI API key not provided, using mock responses")
-		return nil, fmt.Errorf("Google AI API key not provided")
+		return nil, fmt.Errorf("google AI API key not provided")
 	}
 
 	client, err := genai.NewClient(context.Background(), option.WithAPIKey(geminiCfg.APIKey))
@@ -174,7 +174,7 @@ func (g *GoogleAIGenerator) GeneratePersona(ctx context.Context, prompt string) 
 		return fmt.Sprintf("안녕하세요! 저는 %s입니다.", prompt), nil
 	}
 
-	model := g.client.GenerativeModel("gemini-1.5-flash")
+	model := g.client.GenerativeModel("gemini-2.0-flash")
 	model.SetTemperature(0.8)
 	model.SetMaxOutputTokens(200)
 
@@ -215,7 +215,7 @@ func (g *GoogleAIGenerator) GenerateEventMessage(ctx context.Context, persona, e
 		return fmt.Sprintf("%s가 %s 이벤트를 알려드립니다!", persona, event), nil
 	}
 
-	model := g.client.GenerativeModel("gemini-1.5-flash")
+	model := g.client.GenerativeModel("gemini-2.0-flash")
 	model.SetTemperature(0.9)
 	model.SetMaxOutputTokens(150)
 
