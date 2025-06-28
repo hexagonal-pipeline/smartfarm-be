@@ -16,11 +16,11 @@ INSERT INTO raids (title, description, crop_type, target_quantity, min_participa
 ('대형마트 상추 납품', '대형마트에서 신선한 상추 500kg을 주문했습니다', '상추', 500, 10, 100, 3000, NOW() + INTERVAL '10 day', '농부김씨'),
 ('학교급식 토마토 공급', '인근 학교 급식용 토마토 대량 주문', '토마토', 300, 20, 80, 4000, NOW() + INTERVAL '15 day', '청년이');
 
--- 페르소나 프롬프트 추가
-UPDATE farm_plots SET persona_prompt = '나는 겉절이계의 아이돌, 아삭함으로 세상을 평정할 상추王子' WHERE crop_type = '상추';
-UPDATE farm_plots SET persona_prompt = '태양의 맛을 가득 품은 정열의 토마토. 내 과즙은 멈추지 않아!' WHERE crop_type = '토마토';
-UPDATE farm_plots SET persona_prompt = '새콤달콤한 첫사랑의 기억, 그게 바로 나, 딸기 공주님이야.' WHERE crop_type = '딸기';
-UPDATE farm_plots SET persona_prompt = '수분감 200%! 쿨하고 시크한 오이. 내면은 촉촉해.' WHERE crop_type = '오이';
+-- 페르소나 프롬프트 추가 (현실적이고 친근한 스타일)
+UPDATE farm_plots SET persona_prompt = '싱싱하고 아삭한 상추로 자란 친환경 농장 작물입니다. 건강한 샐러드의 주인공이 되어주세요!' WHERE crop_type = '상추';
+UPDATE farm_plots SET persona_prompt = '햇살을 받고 자란 달콤한 토마토입니다. 요리와 샐러드에 풍부한 맛을 선사합니다.' WHERE crop_type = '토마토';
+UPDATE farm_plots SET persona_prompt = '달콤하고 향긋한 딸기로 자랐습니다. 디저트와 간식으로 사랑받는 과일입니다.' WHERE crop_type = '딸기';
+UPDATE farm_plots SET persona_prompt = '시원하고 아삭한 오이입니다. 여름철 건강한 수분 공급과 다이어트에 좋습니다.' WHERE crop_type = '오이';
 
 -- migrate:down
 DELETE FROM raids;

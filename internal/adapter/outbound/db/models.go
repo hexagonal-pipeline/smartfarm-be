@@ -43,12 +43,13 @@ type FarmPlot struct {
 }
 
 type PlantCard struct {
-	ID         int32              `json:"id"`
-	FarmPlotID int32              `json:"farm_plot_id"`
-	Persona    string             `json:"persona"`
-	ImageUrl   pgtype.Text        `json:"image_url"`
-	VideoUrl   pgtype.Text        `json:"video_url"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	ID           int32              `json:"id"`
+	FarmPlotID   int32              `json:"farm_plot_id"`
+	Persona      string             `json:"persona"`
+	ImageUrl     pgtype.Text        `json:"image_url"`
+	VideoUrl     pgtype.Text        `json:"video_url"`
+	EventMessage pgtype.Text        `json:"event_message"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type Raid struct {

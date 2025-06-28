@@ -21,6 +21,8 @@ type Querier interface {
 	GetLeaderboard(ctx context.Context) ([]GetLeaderboardRow, error)
 	GetNicknameRaidHistory(ctx context.Context, participantNickname string) ([]GetNicknameRaidHistoryRow, error)
 	GetNicknameRentals(ctx context.Context, renterNickname string) ([]GetNicknameRentalsRow, error)
+	GetPlantCardByID(ctx context.Context, id int32) (PlantCard, error)
+	GetPlantCardsByFarmPlotID(ctx context.Context, farmPlotID int32) ([]PlantCard, error)
 	GetPlot(ctx context.Context, id int32) (FarmPlot, error)
 	GetRaidDetails(ctx context.Context, id int32) (GetRaidDetailsRow, error)
 	GetRaidParticipations(ctx context.Context, raidID int32) ([]GetRaidParticipationsRow, error)
