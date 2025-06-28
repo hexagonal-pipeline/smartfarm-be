@@ -26,7 +26,7 @@ CREATE TABLE credit_transactions (
 -- 인덱스 추가 (성능 최적화)
 CREATE INDEX idx_commission_works_requester ON commission_works(requester_nickname);
 CREATE INDEX idx_commission_works_plot_id ON commission_works(plot_id);
-CREATE INDEX idx_credit_transactions_nickname ON credit_transactions(nickname);
+CREATE INDEX idx_credit_transactions_nickname ON credit_transactions(nickname); 
 
 -- migrate:down
 DROP TABLE IF EXISTS credit_transactions;

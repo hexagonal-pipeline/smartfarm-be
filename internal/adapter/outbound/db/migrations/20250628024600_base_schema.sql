@@ -21,7 +21,7 @@ CREATE TABLE user_stats (
     successful_raids INTEGER DEFAULT 0, -- 성공한 레이드 횟수
     plots_rented INTEGER DEFAULT 0, -- 임대한 구획 수
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+); 
 
 -- migrate:down
 DROP TABLE IF EXISTS user_stats;

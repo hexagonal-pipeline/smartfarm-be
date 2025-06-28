@@ -2,45 +2,84 @@ package postgres
 
 import (
 	"context"
-
+	"fmt"
 	"smartfarm-be/internal/adapter/outbound/db"
 	"smartfarm-be/internal/domain"
-	farmoutbound "smartfarm-be/internal/ports/outbound"
+	"smartfarm-be/internal/ports/outbound"
 
 	"github.com/samber/do/v2"
 )
 
 type FarmRepository struct {
-	querier db.Querier
+	q db.Querier
 }
 
-func NewFarmRepository(injector do.Injector) (farmoutbound.FarmRepository, error) {
+func NewFarmRepository(injector do.Injector) (outbound.FarmRepository, error) {
 	querier, err := do.Invoke[db.Querier](injector)
 	if err != nil {
 		return nil, err
 	}
-
-	return &FarmRepository{querier: querier}, nil
+	return &FarmRepository{q: querier}, nil
 }
 
 func toDomainFarmPlot(p db.FarmPlot) domain.FarmPlot {
 	return domain.FarmPlot{
 		ID:          int64(p.ID),
 		Name:        p.Name,
-		IsAvailable: p.Status.String == "available" && p.Status.Valid,
+		Location:    p.Location.String,
+		SizeSqm:     p.SizeSqm,
+		MonthlyRent: p.MonthlyRent,
+		CropType:    p.CropType.String,
+		Status:      p.Status.String,
+		CreatedAt:   p.CreatedAt.Time,
+	}
+}
+
+func toDomainFarmPlotFromRenterRow(p db.ListPlotsByRenterRow) domain.FarmPlot {
+	return domain.FarmPlot{
+		ID:       int64(p.ID),
+		Name:     p.Name,
+		Location: p.Location.String,
+		SizeSqm:  p.SizeSqm,
+		CropType: p.CropType.String,
+		Status:   p.Status.String,
 	}
 }
 
 func (r *FarmRepository) ListAvailable(ctx context.Context) ([]domain.FarmPlot, error) {
-	dbPlots, err := r.querier.ListAvailablePlots(ctx)
+	dbPlots, err := r.q.ListAvailablePlots(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list available plots: %w", err)
 	}
 
-	domainPlots := make([]domain.FarmPlot, 0, len(dbPlots))
-	for _, p := range dbPlots {
-		domainPlots = append(domainPlots, toDomainFarmPlot(p))
+	plots := make([]domain.FarmPlot, len(dbPlots))
+	for i, p := range dbPlots {
+		plots[i] = toDomainFarmPlot(p)
 	}
 
-	return domainPlots, nil
+	return plots, nil
+}
+
+func (r *FarmRepository) ListByRenter(ctx context.Context, renterNickname string) ([]domain.FarmPlot, error) {
+	dbPlots, err := r.q.ListPlotsByRenter(ctx, renterNickname)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list plots by renter: %w", err)
+	}
+
+	plots := make([]domain.FarmPlot, len(dbPlots))
+	for i, p := range dbPlots {
+		plots[i] = toDomainFarmPlotFromRenterRow(p)
+	}
+
+	return plots, nil
+}
+
+func (r *FarmRepository) GetByID(ctx context.Context, id int64) (*domain.FarmPlot, error) {
+	dbPlot, err := r.q.GetPlot(ctx, int32(id))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get farm plot by id %d: %w", id, err)
+	}
+
+	plot := toDomainFarmPlot(dbPlot)
+	return &plot, nil
 }

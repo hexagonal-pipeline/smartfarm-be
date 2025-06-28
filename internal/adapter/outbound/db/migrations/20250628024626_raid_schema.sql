@@ -30,7 +30,7 @@ CREATE TABLE raid_participations (
 -- 인덱스 생성 (성능용)
 CREATE INDEX idx_raids_status ON raids(status);
 CREATE INDEX idx_raid_participations_raid_id ON raid_participations(raid_id);
-CREATE INDEX idx_raid_participations_nickname ON raid_participations(participant_nickname);
+CREATE INDEX idx_raid_participations_nickname ON raid_participations(participant_nickname); 
 
 -- migrate:down
 DROP TABLE IF EXISTS raid_participations;

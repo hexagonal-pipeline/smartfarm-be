@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	CreateCommissionWork(ctx context.Context, arg CreateCommissionWorkParams) (CommissionWork, error)
+	CreatePlantCard(ctx context.Context, arg CreatePlantCardParams) (PlantCard, error)
 	CreateRaid(ctx context.Context, arg CreateRaidParams) (Raid, error)
 	CreateRental(ctx context.Context, arg CreateRentalParams) (Rental, error)
 	CreateUserStats(ctx context.Context, nickname string) (UserStat, error)
@@ -33,8 +34,9 @@ type Querier interface {
 	ListCommissionWorksByStatus(ctx context.Context, status string) ([]CommissionWork, error)
 	ListOpenRaids(ctx context.Context) ([]ListOpenRaidsRow, error)
 	ListPlotsByCrop(ctx context.Context, cropType pgtype.Text) ([]FarmPlot, error)
+	ListPlotsByRenter(ctx context.Context, renterNickname string) ([]ListPlotsByRenterRow, error)
 	UpdateCommissionWorkStatus(ctx context.Context, arg UpdateCommissionWorkStatusParams) (CommissionWork, error)
-	UpdatePlotStatus(ctx context.Context, arg UpdatePlotStatusParams) (FarmPlot, error)
+	UpdateFarmPlotStatus(ctx context.Context, arg UpdateFarmPlotStatusParams) (FarmPlot, error)
 	UpdateRaidStatus(ctx context.Context, arg UpdateRaidStatusParams) (Raid, error)
 	UpdateUserExperience(ctx context.Context, arg UpdateUserExperienceParams) (UserStat, error)
 	UpdateUserRevenue(ctx context.Context, arg UpdateUserRevenueParams) (UserStat, error)

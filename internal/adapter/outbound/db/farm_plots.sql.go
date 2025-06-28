@@ -12,7 +12,7 @@ import (
 )
 
 const getPlot = `-- name: GetPlot :one
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE id = $1
 `
 
@@ -28,12 +28,13 @@ func (q *Queries) GetPlot(ctx context.Context, id int32) (FarmPlot, error) {
 		&i.CropType,
 		&i.Status,
 		&i.CreatedAt,
+		&i.PersonaPrompt,
 	)
 	return i, err
 }
 
 const listAvailablePlots = `-- name: ListAvailablePlots :many
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE status = 'available'
 ORDER BY monthly_rent ASC
 `
@@ -56,6 +57,7 @@ func (q *Queries) ListAvailablePlots(ctx context.Context) ([]FarmPlot, error) {
 			&i.CropType,
 			&i.Status,
 			&i.CreatedAt,
+			&i.PersonaPrompt,
 		); err != nil {
 			return nil, err
 		}
@@ -68,7 +70,7 @@ func (q *Queries) ListAvailablePlots(ctx context.Context) ([]FarmPlot, error) {
 }
 
 const listPlotsByCrop = `-- name: ListPlotsByCrop :many
-SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at FROM farm_plots
+SELECT id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt FROM farm_plots
 WHERE crop_type = $1 AND status = 'available'
 ORDER BY monthly_rent ASC
 `
@@ -91,6 +93,7 @@ func (q *Queries) ListPlotsByCrop(ctx context.Context, cropType pgtype.Text) ([]
 			&i.CropType,
 			&i.Status,
 			&i.CreatedAt,
+			&i.PersonaPrompt,
 		); err != nil {
 			return nil, err
 		}
@@ -102,20 +105,80 @@ func (q *Queries) ListPlotsByCrop(ctx context.Context, cropType pgtype.Text) ([]
 	return items, nil
 }
 
-const updatePlotStatus = `-- name: UpdatePlotStatus :one
+const listPlotsByRenter = `-- name: ListPlotsByRenter :many
+SELECT
+    p.id,
+    p.name,
+    p.location,
+    p.size_sqm,
+    p.crop_type,
+    p.status,
+    r.start_date,
+    r.end_date
+FROM
+    farm_plots p
+JOIN
+    rentals r ON p.id = r.plot_id
+WHERE
+    r.renter_nickname = $1 AND r.status = 'active'
+ORDER BY
+    r.start_date DESC
+`
+
+type ListPlotsByRenterRow struct {
+	ID        int32       `json:"id"`
+	Name      string      `json:"name"`
+	Location  pgtype.Text `json:"location"`
+	SizeSqm   int32       `json:"size_sqm"`
+	CropType  pgtype.Text `json:"crop_type"`
+	Status    pgtype.Text `json:"status"`
+	StartDate pgtype.Date `json:"start_date"`
+	EndDate   pgtype.Date `json:"end_date"`
+}
+
+func (q *Queries) ListPlotsByRenter(ctx context.Context, renterNickname string) ([]ListPlotsByRenterRow, error) {
+	rows, err := q.db.Query(ctx, listPlotsByRenter, renterNickname)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPlotsByRenterRow{}
+	for rows.Next() {
+		var i ListPlotsByRenterRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Location,
+			&i.SizeSqm,
+			&i.CropType,
+			&i.Status,
+			&i.StartDate,
+			&i.EndDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateFarmPlotStatus = `-- name: UpdateFarmPlotStatus :one
 UPDATE farm_plots
 SET status = $2
 WHERE id = $1
-RETURNING id, name, location, size_sqm, monthly_rent, crop_type, status, created_at
+RETURNING id, name, location, size_sqm, monthly_rent, crop_type, status, created_at, persona_prompt
 `
 
-type UpdatePlotStatusParams struct {
+type UpdateFarmPlotStatusParams struct {
 	ID     int32       `json:"id"`
 	Status pgtype.Text `json:"status"`
 }
 
-func (q *Queries) UpdatePlotStatus(ctx context.Context, arg UpdatePlotStatusParams) (FarmPlot, error) {
-	row := q.db.QueryRow(ctx, updatePlotStatus, arg.ID, arg.Status)
+func (q *Queries) UpdateFarmPlotStatus(ctx context.Context, arg UpdateFarmPlotStatusParams) (FarmPlot, error) {
+	row := q.db.QueryRow(ctx, updateFarmPlotStatus, arg.ID, arg.Status)
 	var i FarmPlot
 	err := row.Scan(
 		&i.ID,
@@ -126,6 +189,7 @@ func (q *Queries) UpdatePlotStatus(ctx context.Context, arg UpdatePlotStatusPara
 		&i.CropType,
 		&i.Status,
 		&i.CreatedAt,
+		&i.PersonaPrompt,
 	)
 	return i, err
 }

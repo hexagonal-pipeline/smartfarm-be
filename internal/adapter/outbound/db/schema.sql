@@ -112,7 +112,8 @@ CREATE TABLE public.farm_plots (
     monthly_rent integer NOT NULL,
     crop_type character varying(50),
     status character varying(20) DEFAULT 'available'::character varying,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    persona_prompt text
 );
 
 
@@ -138,6 +139,44 @@ ALTER SEQUENCE public.farm_plots_id_seq OWNER TO postgres;
 --
 
 ALTER SEQUENCE public.farm_plots_id_seq OWNED BY public.farm_plots.id;
+
+
+--
+-- Name: plant_cards; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.plant_cards (
+    id integer NOT NULL,
+    farm_plot_id integer NOT NULL,
+    persona text NOT NULL,
+    image_url character varying(255),
+    video_url character varying(255),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.plant_cards OWNER TO postgres;
+
+--
+-- Name: plant_cards_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.plant_cards_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.plant_cards_id_seq OWNER TO postgres;
+
+--
+-- Name: plant_cards_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.plant_cards_id_seq OWNED BY public.plant_cards.id;
 
 
 --
@@ -353,6 +392,13 @@ ALTER TABLE ONLY public.farm_plots ALTER COLUMN id SET DEFAULT nextval('public.f
 
 
 --
+-- Name: plant_cards id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.plant_cards ALTER COLUMN id SET DEFAULT nextval('public.plant_cards_id_seq'::regclass);
+
+
+--
 -- Name: raid_participations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -402,6 +448,14 @@ ALTER TABLE ONLY public.credit_transactions
 
 ALTER TABLE ONLY public.farm_plots
     ADD CONSTRAINT farm_plots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: plant_cards plant_cards_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.plant_cards
+    ADD CONSTRAINT plant_cards_pkey PRIMARY KEY (id);
 
 
 --
@@ -576,7 +630,7 @@ ALTER TABLE ONLY public.raids
 --
 
 ALTER TABLE ONLY public.rentals
-    ADD CONSTRAINT rentals_plot_id_fkey FOREIGN KEY (plot_id) REFERENCES public.farm_plots(id);
+    ADD CONSTRAINT rentals_plot_id_fkey FOREIGN KEY (plot_id) REFERENCES public.farm_plots(id) ON DELETE CASCADE;
 
 
 --
@@ -593,6 +647,14 @@ ALTER TABLE ONLY public.rentals
 
 ALTER TABLE ONLY public.revenue_records
     ADD CONSTRAINT revenue_records_nickname_fkey FOREIGN KEY (nickname) REFERENCES public.user_stats(nickname);
+
+
+--
+-- Name: plant_cards plant_cards_farm_plot_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.plant_cards
+    ADD CONSTRAINT plant_cards_farm_plot_id_fkey FOREIGN KEY (farm_plot_id) REFERENCES public.farm_plots(id) ON DELETE CASCADE;
 
 
 --
