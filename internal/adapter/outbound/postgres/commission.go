@@ -11,16 +11,16 @@ import (
 )
 
 type CommissionRepository struct {
-	*db.Queries
+	db.Querier
 }
 
 func NewCommissionRepository(injector do.Injector) (outbound.CommissionRepository, error) {
-	queries, err := do.Invoke[*db.Queries](injector)
+	queries, err := do.Invoke[db.Querier](injector)
 	if err != nil {
 		return nil, err
 	}
 	return &CommissionRepository{
-		Queries: queries,
+		Querier: queries,
 	}, nil
 }
 
@@ -47,7 +47,7 @@ func toDomainCommissionWorkSlice(works []db.CommissionWork) []domain.CommissionW
 }
 
 func (r *CommissionRepository) Create(ctx context.Context, arg domain.CommissionWork) (*domain.CommissionWork, error) {
-	created, err := r.Queries.CreateCommissionWork(ctx, db.CreateCommissionWorkParams{
+	created, err := r.Querier.CreateCommissionWork(ctx, db.CreateCommissionWorkParams{
 		RequesterNickname: arg.RequesterNickname,
 		PlotID:            arg.PlotID,
 		TaskType:          arg.TaskType,
@@ -65,7 +65,7 @@ func (r *CommissionRepository) Create(ctx context.Context, arg domain.Commission
 }
 
 func (r *CommissionRepository) FindByID(ctx context.Context, id int64) (*domain.CommissionWork, error) {
-	found, err := r.Queries.GetCommissionWork(ctx, int32(id))
+	found, err := r.Querier.GetCommissionWork(ctx, int32(id))
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (r *CommissionRepository) FindByID(ctx context.Context, id int64) (*domain.
 }
 
 func (r *CommissionRepository) ListByStatus(ctx context.Context, status string) ([]domain.CommissionWork, error) {
-	works, err := r.Queries.ListCommissionWorksByStatus(ctx, status)
+	works, err := r.Querier.ListCommissionWorksByStatus(ctx, status)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (r *CommissionRepository) ListByStatus(ctx context.Context, status string) 
 }
 
 func (r *CommissionRepository) ListByRequester(ctx context.Context, requesterNickname string) ([]domain.CommissionWork, error) {
-	works, err := r.Queries.ListCommissionWorksByRequester(ctx, requesterNickname)
+	works, err := r.Querier.ListCommissionWorksByRequester(ctx, requesterNickname)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (r *CommissionRepository) ListByRequester(ctx context.Context, requesterNic
 }
 
 func (r *CommissionRepository) ListByRequesterAndStatus(ctx context.Context, requesterNickname string, status string) ([]domain.CommissionWork, error) {
-	works, err := r.Queries.ListCommissionWorksByRequesterAndStatus(ctx, db.ListCommissionWorksByRequesterAndStatusParams{
+	works, err := r.Querier.ListCommissionWorksByRequesterAndStatus(ctx, db.ListCommissionWorksByRequesterAndStatusParams{
 		RequesterNickname: requesterNickname,
 		Status:            status,
 	})

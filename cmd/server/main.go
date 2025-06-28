@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/swagger"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
@@ -83,6 +84,13 @@ func startServer(app *fiber.App) {
 	if err := app.Listen(":" + port); err != nil && err != http.ErrServerClosed {
 		log.Fatal().Err(err).Msg("Server failed to start")
 	}
+}
+
+func setupSwagger(app *fiber.App) {
+	app.Get("/swagger/*", swagger.HandlerDefault)
+	app.Get("/swagger/doc.json", func(c *fiber.Ctx) error {
+		return c.SendFile("./docs/swagger.json")
+	})
 }
 
 func waitForSignal() {

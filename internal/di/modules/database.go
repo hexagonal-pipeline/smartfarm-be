@@ -6,21 +6,22 @@ import (
 	"smartfarm-be/pkg/database"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog/log"
 	"github.com/samber/do/v2"
 )
 
 func ProvideDatabase(injector do.Injector) {
 	do.Provide(injector, func(i do.Injector) (*pgxpool.Pool, error) {
-		postgresConfig, err := do.Invoke[*config.PostgresConfig](i)
+		cfg, err := do.Invoke[*config.PostgresConfig](i)
 		if err != nil {
 			return nil, err
 		}
 
-		pool, err := database.NewPostgresPool(postgresConfig)
+		pool, err := database.NewPostgresPool(cfg)
 		if err != nil {
 			return nil, err
 		}
-
+		log.Info().Msg("Postgres connection pool established")
 		return pool, nil
 	})
 
@@ -29,7 +30,6 @@ func ProvideDatabase(injector do.Injector) {
 		if err != nil {
 			return nil, err
 		}
-
 		return db.New(pool), nil
 	})
 }
