@@ -10,4 +10,5 @@ func ProvideUseCases(injector do.Injector) {
 	do.Provide(injector, usecase.NewFarmService)
 	do.Provide(injector, usecase.NewCommissionService)
 	do.Provide(injector, usecase.NewPlantCardUsecase)
+	do.Provide(injector, usecase.NewRaidService)
 }

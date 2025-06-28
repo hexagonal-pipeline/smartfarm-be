@@ -11,11 +11,11 @@ import (
 )
 
 type raidRepository struct {
-	queries *db.Queries
+	queries db.Querier
 }
 
 func NewRaidRepository(injector do.Injector) (outbound.RaidRepository, error) {
-	queries, err := do.Invoke[*db.Queries](injector)
+	queries, err := do.Invoke[db.Querier](injector)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get queries: %w", err)
 	}
