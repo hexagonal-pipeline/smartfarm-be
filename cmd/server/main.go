@@ -20,7 +20,6 @@ import (
 	"smartfarm-be/internal/adapter/inbound/web/farm"
 	"smartfarm-be/internal/adapter/inbound/web/plantcard"
 	"smartfarm-be/internal/di"
-	"smartfarm-be/pkg/config"
 
 	"github.com/joho/godotenv"
 
@@ -33,14 +32,6 @@ func main() {
 	}
 
 	setupLogger()
-
-	// 설정 정보 로드 및 로깅
-	cfg := config.Load()
-	log.Info().
-		Str("port", cfg.Port).
-		Str("postgres_host", cfg.PostgresHost).
-		Bool("has_google_ai_key", cfg.GoogleAIAPIKey != "").
-		Msg("Server configuration loaded")
 
 	injector, err := di.InitializeInjector()
 	if err != nil {
