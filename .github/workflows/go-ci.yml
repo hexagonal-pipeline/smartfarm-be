@@ -17,8 +17,14 @@ jobs:
       with:
         go-version: '1.24.4'
 
+    - name: Install swag
+      run: go install github.com/swaggo/swag/cmd/swag@latest
+
+    - name: Generate Swagger Docs
+      run: swag init -g cmd/server/main.go -o ./docs --parseDependency --parseInternal
+
     - name: Build
       run: go build ./..
 
     - name: Test
-      run: go test ./... 
+      run: go test ./...
