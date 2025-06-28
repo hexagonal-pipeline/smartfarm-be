@@ -1,6 +1,7 @@
 setup:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	go install github.com/amacneil/dbmate/v2@latest
 
 swag:
 	swag init -g cmd/server/main.go -o ./docs --parseDependency --parseInternal
@@ -12,6 +13,18 @@ run:
 sqlc:
 	sqlc generate -f internal/adapter/outbound/db/sqlc.yml
 
+db-new:
+	dbmate new $(filter-out $@,$(MAKECMDGOALS))
+
+db-up:
+	dbmate up
+
+db-down:
+	dbmate down
+
+db-status:
+	dbmate status
+
 deploy:
 	POSTGRES_PORT=5321 docker compose -f deploy/docker-compose-postgres.yml up -d
 
@@ -21,4 +34,4 @@ down:
 downv:
 	docker compose -f deploy/docker-compose-postgres.yml down
 
-.PHONY: setup swag run sqlc deploy down downv
+.PHONY: setup swag run sqlc deploy down downv db-new db-up db-down db-status
