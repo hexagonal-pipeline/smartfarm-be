@@ -122,6 +122,47 @@ func (q *Queries) ListCommissionWorksByRequester(ctx context.Context, requesterN
 	return items, nil
 }
 
+const listCommissionWorksByRequesterAndStatus = `-- name: ListCommissionWorksByRequesterAndStatus :many
+SELECT id, requester_nickname, plot_id, task_type, task_description, status, credit_cost, requested_at, completed_at FROM commission_works
+WHERE requester_nickname = $1 AND status = $2
+ORDER BY requested_at DESC
+`
+
+type ListCommissionWorksByRequesterAndStatusParams struct {
+	RequesterNickname string `json:"requester_nickname"`
+	Status            string `json:"status"`
+}
+
+func (q *Queries) ListCommissionWorksByRequesterAndStatus(ctx context.Context, arg ListCommissionWorksByRequesterAndStatusParams) ([]CommissionWork, error) {
+	rows, err := q.db.Query(ctx, listCommissionWorksByRequesterAndStatus, arg.RequesterNickname, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CommissionWork{}
+	for rows.Next() {
+		var i CommissionWork
+		if err := rows.Scan(
+			&i.ID,
+			&i.RequesterNickname,
+			&i.PlotID,
+			&i.TaskType,
+			&i.TaskDescription,
+			&i.Status,
+			&i.CreditCost,
+			&i.RequestedAt,
+			&i.CompletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCommissionWorksByStatus = `-- name: ListCommissionWorksByStatus :many
 SELECT id, requester_nickname, plot_id, task_type, task_description, status, credit_cost, requested_at, completed_at FROM commission_works
 WHERE status = $1

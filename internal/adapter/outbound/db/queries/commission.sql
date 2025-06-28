@@ -23,6 +23,11 @@ SELECT * FROM commission_works
 WHERE status = $1
 ORDER BY requested_at DESC;
 
+-- name: ListCommissionWorksByRequesterAndStatus :many
+SELECT * FROM commission_works
+WHERE requester_nickname = $1 AND status = $2
+ORDER BY requested_at DESC;
+
 -- name: UpdateCommissionWorkStatus :one
 UPDATE commission_works
 SET status = $2

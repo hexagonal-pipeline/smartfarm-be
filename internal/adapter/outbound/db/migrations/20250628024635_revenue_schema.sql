@@ -1,3 +1,4 @@
+-- migrate:up
 -- 수익 기록 테이블 (정산용)
 CREATE TABLE revenue_records (
     id SERIAL PRIMARY KEY,
@@ -10,4 +11,7 @@ CREATE TABLE revenue_records (
 );
 
 -- 인덱스 생성 (성능용)
-CREATE INDEX idx_revenue_records_nickname ON revenue_records(nickname); 
+CREATE INDEX idx_revenue_records_nickname ON revenue_records(nickname);
+
+-- migrate:down
+DROP TABLE IF EXISTS revenue_records; 

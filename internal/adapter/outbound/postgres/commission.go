@@ -81,3 +81,24 @@ func (r *CommissionRepository) ListByStatus(ctx context.Context, status string) 
 
 	return toDomainCommissionWorkSlice(works), nil
 }
+
+func (r *CommissionRepository) ListByRequester(ctx context.Context, requesterNickname string) ([]domain.CommissionWork, error) {
+	works, err := r.Queries.ListCommissionWorksByRequester(ctx, requesterNickname)
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainCommissionWorkSlice(works), nil
+}
+
+func (r *CommissionRepository) ListByRequesterAndStatus(ctx context.Context, requesterNickname string, status string) ([]domain.CommissionWork, error) {
+	works, err := r.Queries.ListCommissionWorksByRequesterAndStatus(ctx, db.ListCommissionWorksByRequesterAndStatusParams{
+		RequesterNickname: requesterNickname,
+		Status:            status,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return toDomainCommissionWorkSlice(works), nil
+}

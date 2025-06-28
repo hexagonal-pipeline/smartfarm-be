@@ -54,21 +54,20 @@ func (h *Handler) CreateCommissionWork(c *fiber.Ctx) error {
 }
 
 // ListCommissionWorksByStatus godoc
-// @Summary      List commission works by status
-// @Description  get a list of commission works filtered by status
+// @Summary      List commission works
+// @Description  get a list of commission works filtered by status and/or requester nickname
 // @Tags         commissions
 // @Accept       json
 // @Produce      json
-// @Param        status   query      string  true  "Status to filter by (e.g., requested, in_progress, completed, cancelled)"
+// @Param        status   query      string  false  "Status to filter by (e.g., requested, in_progress, completed, cancelled)"
+// @Param        nickname   query    string  false  "Requester nickname to filter by"
 // @Success      200  {object}  CommissionWorkListResponse
 // @Router       /commissions [get]
-func (h *Handler) ListCommissionWorksByStatus(c *fiber.Ctx) error {
+func (h *Handler) ListCommissionWorks(c *fiber.Ctx) error {
 	status := c.Query("status")
-	if status == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "status query parameter is required")
-	}
+	nickname := c.Query("nickname")
 
-	works, err := h.useCase.ListCommissionWorksByStatus(c.Context(), status)
+	works, err := h.useCase.ListCommissionWorks(c.Context(), nickname, status)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to get commission works")
 	}

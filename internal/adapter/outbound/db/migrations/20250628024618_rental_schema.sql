@@ -1,3 +1,4 @@
+-- migrate:up
 -- 임대 정보 테이블
 CREATE TABLE rentals (
     id SERIAL PRIMARY KEY,
@@ -12,4 +13,7 @@ CREATE TABLE rentals (
 
 -- 인덱스 생성 (성능용)
 CREATE INDEX idx_rentals_nickname ON rentals(renter_nickname);
-CREATE INDEX idx_rentals_plot_id ON rentals(plot_id); 
+CREATE INDEX idx_rentals_plot_id ON rentals(plot_id);
+
+-- migrate:down
+DROP TABLE IF EXISTS rentals; 

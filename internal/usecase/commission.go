@@ -60,3 +60,20 @@ func (s *CommissionService) ListCommissionWorksByStatus(ctx context.Context, sta
 
 	return works, nil
 }
+
+func (s *CommissionService) ListCommissionWorks(ctx context.Context, requesterNickname, status string) ([]domain.CommissionWork, error) {
+	// TODO: status 값에 대한 유효성 검사 로직 추가 (enum 등)
+
+	if requesterNickname != "" && status != "" {
+		return s.repo.ListByRequesterAndStatus(ctx, requesterNickname, status)
+	}
+	if requesterNickname != "" {
+		return s.repo.ListByRequester(ctx, requesterNickname)
+	}
+	if status != "" {
+		return s.repo.ListByStatus(ctx, status)
+	}
+
+	// 모든 조건이 비어있을 경우의 처리 (예: 빈 목록 반환 또는 에러 처리)
+	return []domain.CommissionWork{}, nil
+}

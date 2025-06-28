@@ -29,6 +29,7 @@ type Querier interface {
 	JoinRaid(ctx context.Context, arg JoinRaidParams) (RaidParticipation, error)
 	ListAvailablePlots(ctx context.Context) ([]FarmPlot, error)
 	ListCommissionWorksByRequester(ctx context.Context, requesterNickname string) ([]CommissionWork, error)
+	ListCommissionWorksByRequesterAndStatus(ctx context.Context, arg ListCommissionWorksByRequesterAndStatusParams) ([]CommissionWork, error)
 	ListCommissionWorksByStatus(ctx context.Context, status string) ([]CommissionWork, error)
 	ListOpenRaids(ctx context.Context) ([]ListOpenRaidsRow, error)
 	ListPlotsByCrop(ctx context.Context, cropType pgtype.Text) ([]FarmPlot, error)

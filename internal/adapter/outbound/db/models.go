@@ -87,6 +87,10 @@ type RevenueRecord struct {
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 }
 
+type SchemaMigration struct {
+	Version string `json:"version"`
+}
+
 type UserStat struct {
 	Nickname        string           `json:"nickname"`
 	Level           pgtype.Int4      `json:"level"`
