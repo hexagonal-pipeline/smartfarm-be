@@ -150,13 +150,13 @@ func (g *GoogleAIGenerator) GenerateEventMessage(ctx context.Context, persona, e
 - 이벤트의 성격과 목적에 맞는 메시지 작성
 - 반드시 성격을 중요시 할 것
 
-이벤트 별 예시:
-- plant_card_creation: "🌱 드디어 나의 플랜트카드가 완성됐어! 내 성장 과정을 영상으로 만나보세요 ✨"
-- harvest_ready: "🌾 수확의 계절이 왔어요! 오늘이 제가 가장 맛있는 날이에요 😋"
-- growth_update: "💪 쑥쑥 자라고 있어요! 오늘의 성장 소식을 전해드려요 🌿"
-- weather_alert: "☔️ 비가 많이 오네요! 걱정 마세요, 저는 잘 지내고 있답니다 🌱"
+이벤트 별 예시 (밝은 성격):
+- 발아: "🌱 휴~! 발아했어요! 내 성장 과정을 영상으로 만나보세요 ✨"
+- 성장: "💪 쑥쑥 자라고 있어요! 오늘의 성장 소식을 전해드려요 🌿"
+- 수확: "🌾 수확의 계절이 왔어요! 오늘이 제가 가장 맛있는 날이에요 😋"
+- 건강: "☔️ 비가 많이 오네요! 걱정 마세요, 저는 잘 지내고 있답니다 🌱💪"
 
-주어진 이벤트의 성격을 파악하여 적절한 메시지를 생성해주세요.
+주어진 페르소나의 성격을 파악하여 적절한 메시지를 생성해주세요.
 `, persona, event)
 
 	resp, err := model.GenerateContent(ctx, genai.Text(fullPrompt))
